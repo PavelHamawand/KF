@@ -1,14 +1,17 @@
 package kf.api;
+
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.concurrent.Semaphore;
 import java.io.IOException;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.OutputStream;
 
-public class LocalServer  {
-    private static String authCode = null;
+public class LocalServer {
+    private String authCode = null;
+    private Semaphore signal = new Semaphore(0);
 
     public void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -18,21 +21,19 @@ public class LocalServer  {
         System.out.println("Server started on http://localhost:8080/callback");
     }
 
-    public synchronized String getAuthCode() {
-        while(authCode == null){
-          try {
-              wait();
-          } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              e.printStackTrace();
-          }
+    public String getAuthCode() {
+        System.out.println("Waiting for authorization code...");
+        try {
+            signal.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return authCode;
     }
 
-    static class AuthHandler  implements HttpHandler {
+    private class AuthHandler implements HttpHandler {
         @Override
-        public synchronized void handle(HttpExchange exchange) throws IOException {
+        public void handle(HttpExchange exchange) throws IOException {
             URI requestURI = exchange.getRequestURI();
             String query = requestURI.getQuery();
 
@@ -48,7 +49,7 @@ public class LocalServer  {
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
             os.close();
-            notifyAll();
+            signal.release();
         }
     }
 }

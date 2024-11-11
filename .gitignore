@@ -14,7 +14,7 @@
 *.ear
 
 # Ignore Maven target directory
-/target/
+target/
 
 # Ignore IntelliJ IDEA project files
 .idea/
