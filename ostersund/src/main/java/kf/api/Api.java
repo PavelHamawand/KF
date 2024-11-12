@@ -8,10 +8,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Scanner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 
 
@@ -99,19 +102,44 @@ public class Api {
 
         System.out.println("Creating test invoice...");
 
-        // Create invoice JSON
-        String invoiceJson = "{ \"Invoice\": { \"CustomerNumber\": \"1\", \"InvoiceDate\": \"2023-10-01\", \"DueDate\": \"2023-10-15\", \"Total\": \"1000\" } }";
+        // Create the Invoice object
+        Invoice invoice = new Invoice();
+        invoice.setCustomerNumber("1");
+        invoice.setInvoiceDate("2024-11-11");
 
+        // Create InvoiceRow
+        InvoiceRow invoiceRow = new InvoiceRow();
+        invoiceRow.setArticleNumber("1");
+        invoiceRow.setDeliveredQuantity(1);
+        invoiceRow.setPrice(100);
 
+        // Add InvoiceRow to a list
+        List<InvoiceRow> invoiceRows = new ArrayList<>();
+        invoiceRows.add(invoiceRow);
+
+        // Set InvoiceRows to Invoice
+        invoice.setInvoiceRows(invoiceRows);
+
+        // Serialize to JSON using Gson
+        Gson gson = new Gson();
+
+        // Create a JsonObject and add the Invoice object under the "Invoice" key
+        JsonObject invoiceJsonObject = new JsonObject();
+        invoiceJsonObject.add("Invoice", gson.toJsonTree(invoice));
+
+        // Convert the JsonObject to a String
+        String invoiceJson = gson.toJson(invoiceJsonObject);
+
+        // Build the HTTP request
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.fortnox.se/3/invoices")) // Replace with the correct endpoint
+                .uri(URI.create("https://api.fortnox.se/3/invoices"))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + accessToken)
                 .POST(HttpRequest.BodyPublishers.ofString(invoiceJson))
                 .build();
 
-        try
-        {
+        // Send the request and handle the response
+        try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int responseCode = response.statusCode();
             if (responseCode == 201 || responseCode == 200) {
@@ -121,9 +149,7 @@ public class Api {
                 System.out.println("Failed to create invoice. HTTP Response Code: " + responseCode);
                 System.out.println("Response: " + response.body());
             }
-        }
-    catch(IOException| InterruptedException e)
-        {
+        } catch (IOException | InterruptedException e) {
             System.out.println("Error: " + e.getMessage());
             e.printStackTrace();
         }
