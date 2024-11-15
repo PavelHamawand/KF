@@ -104,7 +104,7 @@ public class App extends Application {
 
         VBox instructions = new VBox(10);
         instructions.setPadding(new Insets(30));
-        instructions.setAlignment(Pos.TOP_LEFT);
+        instructions.setAlignment(Pos.CENTER_LEFT);
 
         Label howToUseLabel = new Label("How to use:");
         howToUseLabel.getStyleClass().add("label");
@@ -123,7 +123,7 @@ public class App extends Application {
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(20));
         mainLayout.setLeft(buttonMenu);
-        mainLayout.setCenter(instructions);
+        mainLayout.setRight(instructions);
         mainLayout.getStyleClass().add("scene");
 
         Scene scene = new Scene(mainLayout, 600, 400);
