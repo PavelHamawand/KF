@@ -5,8 +5,6 @@
     -fx-font-family: Arial;
 }
 
-
-
 /* Menu Buttons */
 .menu-button {
     -fx-background-color: #1E90FF;
@@ -14,11 +12,23 @@
     -fx-font-size: 14px;
     -fx-font-family: Arial;
     -fx-padding: 10px;
+    -fx-background-radius: 5px;
 }
 
 /* Instructions Text */
 .instructions-text {
     -fx-font-size: 14px;
-    -fx-fill: black;
+    -fx-text-fill: black;
     -fx-font-family: Arial;
+}
+
+/* VBox styling for border and spacing */
+.vbox-container {
+    -fx-padding: 20px;
+   
+}
+
+/* scene background color */
+.scene {
+    -fx-background-color: lightgrey;
 }
