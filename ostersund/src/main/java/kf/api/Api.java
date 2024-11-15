@@ -18,6 +18,7 @@ import com.google.gson.JsonObject;
 
 
 
+@SuppressWarnings("unused")
 public class Api {
     private String clientId;
     private String clientSecret;

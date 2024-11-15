@@ -12,7 +12,6 @@ public class Main {
         try {
             server.startServer();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         api.setAuthCode(server.getAuthCode());
