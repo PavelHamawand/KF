@@ -130,7 +130,6 @@ public class Api {
         // Convert the JsonObject to a String
         String invoiceJson = gson.toJson(invoiceJsonObject);
 
-        // Build the HTTP request
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.fortnox.se/3/invoices"))
                 .header("Content-Type", "application/json")
@@ -138,7 +137,6 @@ public class Api {
                 .POST(HttpRequest.BodyPublishers.ofString(invoiceJson))
                 .build();
 
-        // Send the request and handle the response
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int responseCode = response.statusCode();
