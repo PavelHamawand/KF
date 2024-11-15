@@ -1,0 +1,24 @@
+/* Menu Label */
+.label {
+    -fx-font-size: 20px;
+    -fx-text-fill: darkblue;
+    -fx-font-family: Arial;
+}
+
+
+
+/* Menu Buttons */
+.menu-button {
+    -fx-background-color: #1E90FF;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-family: Arial;
+    -fx-padding: 10px;
+}
+
+/* Instructions Text */
+.instructions-text {
+    -fx-font-size: 14px;
+    -fx-fill: black;
+    -fx-font-family: Arial;
+}
