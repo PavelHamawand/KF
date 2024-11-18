@@ -2,16 +2,21 @@
 package kf;
 
 import java.io.File;
+import java.util.List;
 
 import javafx.application.Application;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -78,10 +83,8 @@ public class App extends Application {
         generateInvoiceButton.getStyleClass().add("menu-button");
 
         generateInvoiceButton.setOnAction(e -> {
-            Alert alert = new Alert(AlertType.INFORMATION);
-            alert.setHeaderText("Feature not yet implemented");
-            alert.setContentText("Select a file when this feature is implemented.");
-            alert.showAndWait();
+            s.setScene(getInvoicesScene(s)); // Switch to invoices scene
+            s.show();
         });
 
         Button invoiceItemsButton = new Button("Invoice Items");
@@ -131,4 +134,75 @@ public class App extends Application {
 
         return scene;
     }
+
+    public Scene getInvoicesScene(Stage s) {
+
+    
+    Label titleLabel = new Label("Generate invoices");
+    titleLabel.getStyleClass().add("label");
+
+    
+    Label invoicesLabel = new Label("Invoices");
+    invoicesLabel.getStyleClass().add("instructions-text"); // Smaller font style
+    invoicesLabel.setAlignment(Pos.TOP_LEFT); // Align to the left
+
+    // skapa tableview
+    TableView<List<String>> invoiceTable = new TableView<>();
+    invoiceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    invoiceTable.setMinWidth(400);
+    invoiceTable.setMaxHeight(150);
+
+    // definiera olika kolumner
+    TableColumn<List<String>, String> nameColumn = new TableColumn<>("Name");
+    nameColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(0)));
+
+    TableColumn<List<String>, String> itemsColumn = new TableColumn<>("Items");
+    itemsColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(1)));
+
+    TableColumn<List<String>, String> amountColumn = new TableColumn<>("Amount");
+    amountColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(2)));
+
+    // lägg till kolumner i tabell
+    invoiceTable.getColumns().addAll(nameColumn, itemsColumn, amountColumn);
+
+    // hittepå ba
+    invoiceTable.getItems().addAll(
+            List.of("Anders Persson", "Kajakplats", "1000kr"),
+            List.of("Albin Bernier", "Kajakplats, Utökat träningskort", "1600kr")
+    );
+
+    
+    Button backButton = new Button("Back");
+    backButton.setMinWidth(100);
+    backButton.getStyleClass().add("menu-button");
+
+    backButton.setOnAction(e -> {
+        s.setScene(getMainLayout(s)); // Switch to invoices scene
+        s.show();
+    });
+
+    
+    Button sendButton = new Button("Send to Fortnox");
+    sendButton.setMinWidth(150);
+    sendButton.getStyleClass().add("menu-button");
+
+    // Horisontell layout för knapparna
+    HBox buttonLayout = new HBox(20, backButton, sendButton);
+    buttonLayout.setAlignment(Pos.CENTER);
+
+    // Layout 
+    VBox layout = new VBox(10, titleLabel, invoicesLabel, invoiceTable, buttonLayout);
+    layout.setAlignment(Pos.TOP_CENTER);
+    layout.setPadding(new Insets(30));
+    layout.getStyleClass().add("scene"); // Apply the background color from .scene
+
+    // Align "Invoices" label to the left
+    VBox.setMargin(invoicesLabel, new Insets(0, 0, 0, 20)); // Add left margin
+
+    // skapa o returnera scen
+    Scene scene = new Scene(layout, 600, 400);
+    scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+
+    return scene;
+}
 }
