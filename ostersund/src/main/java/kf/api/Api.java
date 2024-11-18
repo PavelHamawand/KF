@@ -16,8 +16,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
-
-
 public class Api {
     private String clientId;
     private String clientSecret;
@@ -25,12 +23,12 @@ public class Api {
     private String authURL;
     private String accessToken;
     private String redirectURL;
-    HttpClient client;
+    private HttpClient client;
 
     public Api() {
-        File file = new File("ostersund/src/main/java/kf/api/env.txt");
-        this.client = HttpClient.newHttpClient();
 
+        // Environment variables
+        File file = new File("ostersund/src/main/java/kf/api/env.txt");
         try {
             Scanner scanner = new Scanner(file);
             clientId = scanner.nextLine();
@@ -39,21 +37,37 @@ public class Api {
             redirectURL = scanner.nextLine();
             scanner.close();
         } catch (FileNotFoundException e) {
-            // Failar om env fil inte hittas eller om den inte innehåller clientId och
+            System.out.println("File not found. Please create a file named 'env.txt' in the 'api' package.");
+            enviorment();
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        //Temorary Server for authentication
+        LocalServer server = new LocalServer();
+        try {
+            server.startServer();
+        } catch (IOException e) {
             e.printStackTrace();
         }
+        //HttpClient for sending requests
+        this.client = HttpClient.newHttpClient();
+        //temp for auth code
+        System.out.println("Please visit Auth URL: " + authURL);
+        this.authCode = server.getAuthCode();
+        this.getAccessToken();  
+
+        
+    }
+
+    private void enviorment() {
         System.out.println("Client ID: " + clientId);
         System.out.println("Client Secret: " + clientSecret);
         System.out.println("Please visit Auth URL: " + authURL);
-
     }
 
-    public void setAuthCode(String authCode) {
-        this.authCode = authCode;
-    }
-
-    public void getAccessToken() {
-        System.out.println("Getting access token...");
+    // Method to get access token
+    private void getAccessToken() {
         String credentials = Base64.getEncoder()
                 .encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
 
@@ -92,6 +106,82 @@ public class Api {
             e.printStackTrace();
         }
 
+    }
+
+    
+
+
+    //metod för att skicka en faktura returnerar true för genomförd och false för misslyckad
+    public boolean sendInvoice(Invoice invoice) throws IOException, InterruptedException {
+        if (accessToken == null) {
+            System.out.println("Access token is missing. Please authenticate first.");
+            return false;
+        }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        JsonObject invoiceJsonObject = new JsonObject();
+
+        invoiceJsonObject.add("Invoice", gson.toJsonTree(invoice));
+
+        // Convert the JsonObject to a String
+        String invoiceJson = gson.toJson(invoiceJsonObject);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.fortnox.se/3/invoices"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + accessToken)
+                .POST(HttpRequest.BodyPublishers.ofString(invoiceJson))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        int responseCode = response.statusCode();
+        if (responseCode == 200) {
+            return true;
+        } else if (responseCode == 400) {
+            System.out.println("Failed to create invoice. HTTP Response Code: " + responseCode);
+            System.out.println("Response: " + response.body());
+            return false;
+        } else
+            throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode);
+    }
+
+    // Skickar alla fakturor i en lista och returnerar antalet fakturor som skickades
+    public int sendInvoiceList(ArrayList<Invoice> invoices) throws IOException, InterruptedException {
+        int sentInvoices = 0;
+        if (accessToken == null) {
+            System.out.println("Access token is missing. Please authenticate first.");
+            return -1;
+        }
+
+        // Serialize to JSON using Gson
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        JsonObject invoiceJsonObject = new JsonObject();
+
+        for (Invoice invoice : invoices) {
+            // Create a JsonObject and add the Invoice object under the "Invoice" key
+
+            invoiceJsonObject.add("Invoice", gson.toJsonTree(invoice));
+
+            // Convert the JsonObject to a String
+            String invoiceJson = gson.toJson(invoiceJsonObject);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.fortnox.se/3/invoices"))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .POST(HttpRequest.BodyPublishers.ofString(invoiceJson))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            int responseCode = response.statusCode();
+            if (responseCode == 200) {
+                sentInvoices++;
+            } else
+                throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode +
+                        "\nFailed to send all invoices. Only " + sentInvoices + " out of " + invoices.size()
+                        + " invoices were sent.");
+        }
+        return sentInvoices;
     }
 
     public void createTestInvoice() {
@@ -153,6 +243,3 @@ public class Api {
         }
     }
 }
-
-    
-    
