@@ -51,7 +51,7 @@ public class Parser {
         return data;
     }  
 
-    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItems> items){
+    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> items){
         if(header.get("Grupp/Lag/Arbetsrum/Familj") != null){ // får ha nån snyggare error hantering senare;
             return null;
         }
@@ -66,10 +66,10 @@ public class Parser {
         return invoices;
     }
 
-    private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItems> itemFilter){
+    private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter){
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for(String item : items){
-            for (InvoiceItems invoiceItems : itemFilter) {
+            for (InvoiceItem invoiceItems : itemFilter) {
                 if(item.equals(invoiceItems.key)){
                     InvoiceRow tempInvoiceRow = new InvoiceRow();
                     tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);
@@ -79,10 +79,5 @@ public class Parser {
             }
         }
         return rows;
-    }
-
-    public static void main(String[] args) {
-        Parser pars = new Parser(new File("ostersund/src/main/java/kf/example.csv"));
-
     }
 }
