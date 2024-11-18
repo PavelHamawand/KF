@@ -12,7 +12,7 @@ public class Main {
         Parser pars = new Parser(new File("ostersund/src/main/java/kf/example.csv"));
         Api api = new Api();
         try {
-            api.sendInvoiceList(pars.toInvoices(InvoiceItem.testInvoiceItems()));
+            System.out.println(api.sendInvoiceList(pars.toInvoices(InvoiceItem.testInvoiceItems())));
         } catch (IOException | InterruptedException e) {
             System.out.println("Error sending invoices");
             e.printStackTrace();

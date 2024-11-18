@@ -52,7 +52,7 @@ public class Parser {
     }  
 
     public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> items){
-        if(header.get("Grupp/Lag/Arbetsrum/Familj") != null){ // får ha nån snyggare error hantering senare;
+        if(header.get("Grupp/Lag/Arbetsrum/Familj") == null){ // får ha nån snyggare error hantering senare;
             return null;
         }
         ArrayList<Invoice> invoices = new ArrayList<>();
@@ -61,6 +61,7 @@ public class Parser {
             tempInvoice.setInvoiceRows(toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), items));
             tempInvoice.setCustomerNumber(data.get(x)[header.get("IdrottsID")]);
             tempInvoice.setInvoiceDate("2024-11-11");
+            invoices.add(tempInvoice);
         }
 
         return invoices;
@@ -70,11 +71,12 @@ public class Parser {
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for(String item : items){
             for (InvoiceItem invoiceItems : itemFilter) {
-                if(item.equals(invoiceItems.key)){
+                if(item.contains(invoiceItems.key)){
                     InvoiceRow tempInvoiceRow = new InvoiceRow();
                     tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);
                     tempInvoiceRow.setDeliveredQuantity(1);
                     tempInvoiceRow.setPrice(invoiceItems.price);
+                    rows.add(tempInvoiceRow);
                 }
             }
         }

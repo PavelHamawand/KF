@@ -132,7 +132,7 @@ public class Api {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         int responseCode = response.statusCode();
-        if (responseCode == 200) {
+        if (responseCode == 201) {
             return true;
         } else if (responseCode == 400) {
             System.out.println("Failed to create invoice. HTTP Response Code: " + responseCode);
@@ -171,7 +171,7 @@ public class Api {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int responseCode = response.statusCode();
-            if (responseCode == 200) {
+            if (responseCode == 201) {
                 sentInvoices++;
             } else
                 throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode +
