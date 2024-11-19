@@ -41,3 +41,5 @@ env.txt
 .DS_Store
 Thumbs.db
 .vscode/settings.json
+.test.csv
+.test1.csv
