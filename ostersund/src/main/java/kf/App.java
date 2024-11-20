@@ -11,6 +11,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -92,10 +93,8 @@ public class App extends Application {
         invoiceItemsButton.getStyleClass().add("menu-button");
 
         invoiceItemsButton.setOnAction(e -> {
-            Alert alert = new Alert(AlertType.INFORMATION);
-            alert.setHeaderText("Feature not yet implemented");
-            alert.setContentText("Sends you to a new scene when implemented.");
-            alert.showAndWait();
+            s.setScene(getInvoiceItemsScene(s)); // Switch to invoices scene
+            s.show();
         });
 
         Button exitButton = new Button("Exit");
@@ -206,6 +205,95 @@ public class App extends Application {
         Scene scene = new Scene(layout, 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
+        return scene;
+    }
+
+    public Scene getInvoiceItemsScene(Stage s) {
+        // Title Label
+        Label titleLabel = new Label("Invoice Items");
+        titleLabel.getStyleClass().add("label");
+    
+        // Items Label
+        Label itemsLabel = new Label("Items");
+        itemsLabel.getStyleClass().add("instructions-text");
+    
+        // Table-like VBox for item checkboxes and "Edit" buttons
+        VBox itemList = new VBox(10);
+        itemList.setPadding(new Insets(20));
+        
+        // Mock Data for Items
+        String[] items = {"Medlemskap", "Träningskort", "Kajakplats", "Utökat träningskort"};
+        for (String item : items) {
+            HBox itemRow = new HBox(10);
+    
+            // Checkbox
+            CheckBox checkBox = new CheckBox();
+            // checkBox.getStyleClass().add("menu-button"); // Optional: Add consistent style
+    
+            // Item Name
+            Label itemName = new Label(item);
+            itemName.getStyleClass().add("instructions-text");
+    
+            // Edit Button
+            Button editButton = new Button("Edit");
+            // editButton.getStyleClass().add("menu-button");
+            editButton.setMinWidth(80);
+    
+            itemRow.getChildren().addAll(checkBox, itemName, editButton);
+            itemRow.setAlignment(Pos.CENTER_LEFT);
+            itemList.getChildren().add(itemRow);
+        }
+    
+        // Tooltip Section
+        VBox tooltipBox = new VBox();
+        tooltipBox.setPadding(new Insets(5,10,0,10));
+        tooltipBox.setAlignment(Pos.TOP_CENTER);
+        tooltipBox.setStyle("-fx-border-color: blue; -fx-border-radius: 5px");
+    
+        Label tooltipTitle = new Label("Tool tip");
+        tooltipTitle.getStyleClass().add("label");
+    
+        Text tooltipText = new Text(
+            "Remember to use the\n same name for the item\n here as it is declared in\n the provided CSV file."
+        );
+
+       // tooltipText.setWrapText(true);
+        tooltipText.getStyleClass().add("instructions-text");
+    
+        tooltipBox.getChildren().addAll(tooltipTitle, tooltipText);
+    
+        // Buttons
+        Button backButton = new Button("Back");
+        backButton.getStyleClass().add("menu-button");
+        backButton.setMinWidth(100);
+        backButton.setOnAction(e -> {
+            s.setScene(getMainLayout(s)); // Go back to the main menu
+        });
+    
+        Button addItemButton = new Button("Add new Item");
+        addItemButton.getStyleClass().add("menu-button");
+        addItemButton.setMinWidth(150);
+    
+        // Button Layout
+        HBox buttonLayout = new HBox(20, backButton, addItemButton);
+        buttonLayout.setAlignment(Pos.CENTER);
+        buttonLayout.setPadding(new Insets(20));
+    
+        // Combine everything into the main layout
+        BorderPane mainLayout = new BorderPane();
+        mainLayout.setPadding(new Insets(30));
+        mainLayout.setTop(titleLabel);
+        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
+        BorderPane.setMargin(titleLabel, new Insets(0, 0, 20, 20));
+    
+        mainLayout.setLeft(new VBox(10, itemsLabel, itemList));
+        mainLayout.setRight(tooltipBox);
+        mainLayout.setBottom(buttonLayout);
+    
+        // Scene
+        Scene scene = new Scene(mainLayout, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+    
         return scene;
     }
 }

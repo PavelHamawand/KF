@@ -32,3 +32,16 @@
 .scene {
     -fx-background-color: lightgrey;
 }
+
+.tooltip-box {
+    -fx-border-color: blue;
+    -fx-border-radius: 5px;
+    -fx-padding: none;
+    -fx-background-color: white;
+}
+
+
+
+
+
+
