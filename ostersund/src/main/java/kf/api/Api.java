@@ -43,10 +43,13 @@ public class Api {
             System.exit(1);
         }
 
+        
+
         // Temorary Server for authentication
         LocalServer server = new LocalServer();
         try {
             server.startServer();
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -142,7 +145,8 @@ public class Api {
             throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode);
     }
 
-    // Skickar alla fakturor i en lista och returnerar antalet fakturor som skickades
+    // Skickar alla fakturor i en lista och returnerar antalet fakturor som
+    // skickades
     public int sendInvoiceList(List<Invoice> invoices) throws IOException, InterruptedException {
         int sentInvoices = 0;
         if (accessToken == null) {

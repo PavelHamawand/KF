@@ -2,6 +2,9 @@
 package kf;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
@@ -22,6 +25,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import kf.api.Api;
+import kf.api.Invoice;
+import kf.api.InvoiceRow;
 
 public class App extends Application {
     private File selectedFile;
@@ -33,6 +39,27 @@ public class App extends Application {
         s.setScene(getSelectFileScene(s));
         s.show();
 
+    }
+
+    private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile){
+        //parsa filen
+        Parser pars = new Parser(selectedFile);
+        ArrayList<Invoice> invoices = pars.toInvoices(InvoiceItem.testInvoiceItems());
+
+        for(Invoice n : invoices){
+            String items ="";
+            double price = 0;
+            for (InvoiceRow r : n.getInvoiceRows()){
+                items += r.getArticleNumber() + " ";
+                price += r.getPrice();
+            }
+            List<String> row = new ArrayList<>();
+            row.add(n.getCustomerNumber());
+            row.add(items);
+            row.add(String.valueOf(price));
+            invoiceTable.getItems().add(row);
+        };
+        return invoices;
     }
 
     public Scene getSelectFileScene(Stage s) {
@@ -171,10 +198,7 @@ public class App extends Application {
         // lägg till kolumner i tabell
         invoiceTable.getColumns().addAll(nameColumn, itemsColumn, amountColumn);
 
-        // hittepå ba
-        invoiceTable.getItems().addAll(
-                List.of("Anders Persson", "Kajakplats", "1000kr"),
-                List.of("Albin Bernier", "Kajakplats, Utökat träningskort", "1600kr"));
+        ArrayList<Invoice> invoices = populateTable(invoiceTable, selectedFile);
 
         Button backButton = new Button("Back");
         backButton.setMinWidth(100);
@@ -188,6 +212,25 @@ public class App extends Application {
         Button sendButton = new Button("Send to Fortnox");
         sendButton.setMinWidth(150);
         sendButton.getStyleClass().add("menu-button");
+
+        sendButton.setOnAction(a -> {
+            Api api = new Api();
+            try {
+                java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
+                if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
+                    try {
+                        desktop.browse(new java.net.URI("https://apps.fortnox.se/fs/fs/login.php#"));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                api.sendInvoiceList(invoices);
+            } catch (IOException | InterruptedException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+        });
+
 
         // Horisontell layout för knapparna
         HBox buttonLayout = new HBox(20, backButton, sendButton);
