@@ -15,6 +15,10 @@ public class InvoiceItem { // dåligt namn icke plural
 
     }
 
+    public void setPrice(double newPrice) {
+        this.price = newPrice;
+    }
+
     public static ArrayList<InvoiceItem> testInvoiceItems(){
 
         ArrayList<InvoiceItem> invoiceItems = new ArrayList<InvoiceItem>();

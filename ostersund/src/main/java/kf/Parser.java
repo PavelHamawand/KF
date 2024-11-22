@@ -1,12 +1,13 @@
 package kf;
-import kf.api.Invoice;
-import kf.api.InvoiceRow;
-
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+
+import kf.api.Invoice;
+import kf.api.InvoiceRow;
 
 public class Parser {
     private ArrayList<String[]> data;
@@ -51,20 +52,25 @@ public class Parser {
         return data;
     }  
 
-    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> items){
-        if(header.get("Grupp/Lag/Arbetsrum/Familj") == null){ // får ha nån snyggare error hantering senare;
-            return null;
-        }
+    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> items, int validTime) {
         ArrayList<Invoice> invoices = new ArrayList<>();
-        for(int x = 1; x < data.size(); x++){ // börja på 1 för att skippa headern. går igenom alla kunder.
+        
+        for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
             Invoice tempInvoice = new Invoice();
+            tempInvoice.setCustomerNumber(getColumnValue( x, "IdrottsID"));
             tempInvoice.setInvoiceRows(toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), items));
-            tempInvoice.setCustomerNumber(data.get(x)[header.get("IdrottsID")]);
-            tempInvoice.setInvoiceDate("2024-11-11");
+            tempInvoice.setInvoiceDate(LocalDate.now().plusDays(validTime).toString());
             invoices.add(tempInvoice);
         }
-
         return invoices;
+    }
+
+    private String getColumnValue(int index, String kategori){
+       if(data.get(index)[header.get(kategori)] == null){
+            System.out.println("A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
+            throw new IllegalArgumentException( "A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
+       }
+         return data.get(index)[header.get(kategori)];
     }
 
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter){

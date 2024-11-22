@@ -3,7 +3,6 @@ package kf;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,11 +12,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -44,7 +43,7 @@ public class App extends Application {
     private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile){
         //parsa filen
         Parser pars = new Parser(selectedFile);
-        ArrayList<Invoice> invoices = pars.toInvoices(InvoiceItem.testInvoiceItems());
+        ArrayList<Invoice> invoices = pars.toInvoices(InvoiceItem.testInvoiceItems(), 30);
 
         for(Invoice n : invoices){
             String items ="";
