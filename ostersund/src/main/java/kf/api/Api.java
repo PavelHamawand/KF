@@ -160,7 +160,7 @@ public class Api {
 
         for (Invoice invoice : invoices) {
             // Create a JsonObject and add the Invoice object under the "Invoice" key
-
+            // Eventuellt lägg till wait här för att inte orsaka för många requests
             invoiceJsonObject.add("Invoice", gson.toJsonTree(invoice));
 
             // Convert the JsonObject to a String

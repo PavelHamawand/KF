@@ -1,7 +1,10 @@
 package kf.api;
 
+import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.annotations.SerializedName;
+
+import kf.InvoiceItem;
 
 public class Invoice {
     @SerializedName("CustomerNumber")
@@ -40,11 +43,20 @@ public class Invoice {
         this.invoiceRows = invoiceRows;
     }
 
+    public void addInvoiceRow (InvoiceRow row) {
+        invoiceRows.add(row);
+    }
+
     public String getCustomerName() {
         return customerName;
     }
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public void setForAll(ArrayList<InvoiceItem> forAll) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setForAll'");
     }
 }

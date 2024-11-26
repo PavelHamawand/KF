@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 import kf.api.Invoice;
@@ -52,28 +53,46 @@ public class Parser {
         return data;
     }  
 
-    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> items, int validTime) {
+    private String getColumnValue(int index, String kategori){
+        if(data.get(index)[header.get(kategori)] == null){
+             System.out.println("A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
+             throw new IllegalArgumentException( "A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
+        }
+          return data.get(index)[header.get(kategori)];
+     }
+
+    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> invoiceItems, ArrayList<InvoiceItem> discountList, int validTime) {
         ArrayList<Invoice> invoices = new ArrayList<>();
         
         for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
             Invoice tempInvoice = new Invoice();
             tempInvoice.setCustomerName(getColumnValue(x, "Förnamn") + " " + getColumnValue(x, "Efternamn"));
             tempInvoice.setCustomerNumber(getColumnValue( x, "IdrottsID"));
-            tempInvoice.setInvoiceRows(toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), items));
+
+            // Lägger till standard "For all" artiklar, lägger denna som kommentar just nu 
+            //tempInvoice.setInvoiceRows(forAll(ListManger.getForAll())));
+
+            //Om det finns extra tjänster
+            if(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")] != null){
+                tempInvoice.setInvoiceRows(toRows(data.get(x)[header.get("")].split(","), invoiceItems));
+            }
+            
+            //Om det finns rabatt
+            if(data.get(x)[header.get("Rabatt")] != null){
+                tempInvoice.addInvoiceRow(discount(data.get(x)[header.get("Rabatt")], discountList));
+            }
+
             tempInvoice.setInvoiceDate(LocalDate.now().plusDays(validTime).toString());
             invoices.add(tempInvoice);
         }
         return invoices;
     }
 
-    private String getColumnValue(int index, String kategori){
-       if(data.get(index)[header.get(kategori)] == null){
-            System.out.println("A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
-            throw new IllegalArgumentException( "A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
-       }
-         return data.get(index)[header.get(kategori)];
-    }
 
+    private List<InvoiceRow> forAll(ArrayList<InvoiceItem> forAll) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'forAll'");
+    }
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter){
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for(String item : items){
@@ -90,4 +109,19 @@ public class Parser {
         }
         return rows;
     }
+
+    private InvoiceRow discount(String discount, ArrayList<InvoiceItem> discountList){
+        for (InvoiceItem invoiceItems : discountList) {
+            if(discount.contains(invoiceItems.key)){
+                InvoiceRow tempInvoiceRow = new InvoiceRow();
+                tempInvoiceRow.setArticleName(invoiceItems.key);
+                tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);
+                tempInvoiceRow.setDeliveredQuantity(1);
+                tempInvoiceRow.setPrice(invoiceItems.price);
+                return tempInvoiceRow;
+            }
+        }
+        return null;
+    }
+
 }
