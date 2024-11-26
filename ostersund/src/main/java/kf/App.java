@@ -46,15 +46,17 @@ public class App extends Application {
         ArrayList<Invoice> invoices = pars.toInvoices(InvoiceItem.testInvoiceItems(), 30);
 
         for(Invoice n : invoices){
-            String items ="";
+            StringBuilder items = new StringBuilder();
             double price = 0;
             for (InvoiceRow r : n.getInvoiceRows()){
-                items += r.getArticleNumber() + " ";
+                items.append(r.getArticleName()).append(", ");
                 price += r.getPrice();
             }
+            items.setLength(items.length() - 2);
+
             List<String> row = new ArrayList<>();
-            row.add(n.getCustomerNumber());
-            row.add(items);
+            row.add(n.getCustomerName());
+            row.add(items.toString());
             row.add(String.valueOf(price));
             invoiceTable.getItems().add(row);
         };

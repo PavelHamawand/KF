@@ -57,6 +57,7 @@ public class Parser {
         
         for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
             Invoice tempInvoice = new Invoice();
+            tempInvoice.setCustomerName(getColumnValue(x, "Förnamn") + " " + getColumnValue(x, "Efternamn"));
             tempInvoice.setCustomerNumber(getColumnValue( x, "IdrottsID"));
             tempInvoice.setInvoiceRows(toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), items));
             tempInvoice.setInvoiceDate(LocalDate.now().plusDays(validTime).toString());
@@ -79,6 +80,7 @@ public class Parser {
             for (InvoiceItem invoiceItems : itemFilter) {
                 if(item.contains(invoiceItems.key)){
                     InvoiceRow tempInvoiceRow = new InvoiceRow();
+                    tempInvoiceRow.setArticleName(invoiceItems.key);
                     tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);
                     tempInvoiceRow.setDeliveredQuantity(1);
                     tempInvoiceRow.setPrice(invoiceItems.price);

@@ -13,6 +13,8 @@ public class Invoice {
     @SerializedName("InvoiceRows")
     private List<InvoiceRow> invoiceRows;
 
+    private transient String customerName; // Transient field for customer's name
+
     // Getters and Setters
     public String getCustomerNumber() {
         return customerNumber;
@@ -36,5 +38,13 @@ public class Invoice {
 
     public void setInvoiceRows(List<InvoiceRow> invoiceRows) {
         this.invoiceRows = invoiceRows;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 }

@@ -12,6 +12,8 @@ public class InvoiceRow {
     @SerializedName("Price")
     private double price;
 
+    private transient String articleName; // Transient field for article's name
+
     // Getters and Setters
     public String getArticleNumber() {
         return articleNumber;
@@ -35,6 +37,14 @@ public class InvoiceRow {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public String getArticleName() {
+        return articleName;
+    }
+
+    public void setArticleName(String articleName) {
+        this.articleName = articleName;
     }
 }
 
