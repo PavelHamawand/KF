@@ -12,7 +12,7 @@ public class ListManger {
         this.discounts = initDiscounts();
         this.invoiceItems = initInvoiceItems();
         this.forAll = initForAll();
-        this.extraItems = InvoiceItem.testInvoiceItems();
+        // this.extraItems = InvoiceItem.testInvoiceItems();
     }
 
     private ArrayList<InvoiceItem> initForAll() {
@@ -23,7 +23,7 @@ public class ListManger {
     }
 
     private ArrayList<InvoiceItem> initInvoiceItems() {
-        ArrayList<InvoiceItem>  invoiceItems = new ArrayList<InvoiceItem>();
+        ArrayList<InvoiceItem> invoiceItems = new ArrayList<InvoiceItem>();
         invoiceItems.add(new InvoiceItem("Medlemsavgift", "IO-AVG-2743", 105.0));
         invoiceItems.add(new InvoiceItem("Träningskort", "IO-AVG-43392", 880.0));
         invoiceItems.add(new InvoiceItem("Kajakplats", "IO-AVG-1478", 1450.0));
@@ -31,34 +31,13 @@ public class ListManger {
         return invoiceItems;
     }
 
-    private ArrayList<InvoiceItem> initDiscounts(){
+    private ArrayList<InvoiceItem> initDiscounts() {
         ArrayList<InvoiceItem> discountList = new ArrayList<InvoiceItem>();
         discountList.add(new InvoiceItem("1", "R1", -200));
         discountList.add(new InvoiceItem("2", "R2", -400));
         discountList.add(new InvoiceItem("3", "R3", -600));
         return discountList;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public ArrayList<InvoiceItem> getDiscounts() {
         return discounts;
@@ -91,6 +70,5 @@ public class ListManger {
     public void setForAll(ArrayList<InvoiceItem> forAll) {
         this.forAll = forAll;
     }
-    
-}
 
+}

@@ -6,8 +6,7 @@ public class InvoiceItem { // dåligt namn icke plural
     public double price;
     public boolean forAll;
 
-    
-    public InvoiceItem (String key, String articleNbr, double price){
+    public InvoiceItem(String key, String articleNbr, double price) {
         this.key = key;
         this.articleNbr = articleNbr;
         this.price = price;
@@ -23,6 +22,3 @@ public class InvoiceItem { // dåligt namn icke plural
         this.forAll = !this.forAll;
     }
 }
-
-
-
