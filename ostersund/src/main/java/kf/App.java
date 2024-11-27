@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
+import javafx.scene.control.TextField;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Insets;
@@ -18,8 +18,6 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -34,6 +32,7 @@ import kf.api.InvoiceRow;
 public class App extends Application {
     private File selectedFile;
     private ArrayList<String> items = new ArrayList<>();
+    private ListManger lm = new ListManger();
 
     @Override
     public void start(Stage s) {
@@ -47,13 +46,15 @@ public class App extends Application {
     private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile){
         //parsa filen
         Parser pars = new Parser(selectedFile);
-        ArrayList<Invoice> invoices = pars.toInvoices(InvoiceItem.testInvoiceItems(), 30);
+        ArrayList<Invoice> invoices = pars.toInvoices(lm.getInvoiceItems(), lm.getDiscounts(), 30);
 
         for(Invoice n : invoices){
             StringBuilder items = new StringBuilder();
             double price = 0;
             for (InvoiceRow r : n.getInvoiceRows()){
-                items.append(r.getArticleName()).append(", ");
+                if (r.getPrice() > 0) {
+                    items.append(r.getArticleName()).append(", ");
+                }
                 price += r.getPrice();
             }
             items.setLength(items.length() - 2);
@@ -65,6 +66,27 @@ public class App extends Application {
             invoiceTable.getItems().add(row);
         };
         return invoices;
+    }
+
+    private void getApi(ArrayList<Invoice> invoices) {
+        Api api = new Api();
+        int sent= 0;
+        try {
+            
+            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
+            if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
+                try {
+                    desktop.browse(new java.net.URI("https://apps.fortnox.se/fs/fs/login.php#"));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            sent =  api.sendInvoiceList(invoices);
+        } catch (IOException | InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        System.out.println("Invoices sent to Fortnox" + sent);
     }
 
     public Scene getSelectFileScene(Stage s) {
@@ -217,21 +239,7 @@ public class App extends Application {
         sendButton.getStyleClass().add("menu-button");
 
         sendButton.setOnAction(a -> {
-            Api api = new Api();
-            try {
-                java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
-                if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
-                    try {
-                        desktop.browse(new java.net.URI("https://apps.fortnox.se/fs/fs/login.php#"));
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-                api.sendInvoiceList(invoices);
-            } catch (IOException | InterruptedException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
+            getApi(invoices);
         });
 
 
