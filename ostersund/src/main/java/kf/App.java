@@ -247,6 +247,7 @@ public class App extends Application {
 
             // Edit Button
             Button editButton = new Button("Edit");
+            editButton.setOnAction(e -> s.setScene(EditItem(s, item)));
             // editButton.getStyleClass().add("menu-button");
             editButton.setMinWidth(80);
 
@@ -367,4 +368,63 @@ public class App extends Application {
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
+
+    public Scene EditItem(Stage s, String string) { // som inparameter ska det skickas ett invoice item har sträng som
+                                                    // place holder så länge
+
+        BorderPane window = new BorderPane();
+        VBox grid = new VBox(10);
+        grid.setPadding(new Insets(500, 10, 5, 10));
+        HBox labels = new HBox(125);
+        HBox TextFields = new HBox(10);
+        HBox buttonMeny = new HBox(100);
+
+        Label edit = new Label("Edit Item");
+        edit.getStyleClass().add("label");
+        edit.setAlignment(Pos.CENTER);
+
+        Label nameToTextField = new Label("Name");
+        Label priceToTextField = new Label("Price");
+        Label articleNumberToTextField = new Label("Article Number");
+
+        labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
+
+        TextField name = new TextField(string);
+        TextField price = new TextField();
+        TextField articleNumber = new TextField();
+
+        TextFields.getChildren().addAll(name, price, articleNumber);
+
+        Button backButton = new Button("Back");
+        backButton.getStyleClass().add("menu-button");
+        backButton.setMinWidth(150);
+        backButton.setOnAction(e -> {
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        Button addItem = new Button("Add the edited item");
+        addItem.getStyleClass().add("menu-button");
+        addItem.setMinWidth(150);
+        addItem.setOnAction(e -> {
+            items.remove(string);
+            items.add(name.getCharacters().toString());
+
+            Alert edited = new Alert(AlertType.INFORMATION);
+            edited.setContentText("Item has been updated");
+            edited.showAndWait();
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        buttonMeny.getChildren().addAll(backButton, addItem);
+
+        grid.getChildren().addAll(edit, labels, TextFields, buttonMeny);
+        grid.getStyleClass().add("vbox-container");
+
+        window.setCenter(grid);
+
+        Scene scene = new Scene(window, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
 }
