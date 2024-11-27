@@ -13,6 +13,7 @@
     -fx-font-family: Arial;
     -fx-padding: 10px;
     -fx-background-radius: 5px;
+    
 }
 
 /* Instructions Text */
@@ -36,7 +37,7 @@
 .tooltip-box {
     -fx-border-color: blue;
     -fx-border-radius: 5px;
-    -fx-padding: none;
+    -fx-padding: 5px;
     -fx-background-color: white;
 }
 

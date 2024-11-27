@@ -2,6 +2,7 @@
 package kf;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
@@ -15,6 +16,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -26,6 +28,7 @@ import javafx.stage.Stage;
 
 public class App extends Application {
     private File selectedFile;
+    private ArrayList<String> items = new ArrayList<>();
 
     @Override
     public void start(Stage s) {
@@ -180,7 +183,7 @@ public class App extends Application {
         backButton.getStyleClass().add("menu-button");
 
         backButton.setOnAction(e -> {
-            s.setScene(getMainLayout(s)); // Switch to invoices scene
+            s.setScene(getMainLayout(s)); // Switch to main scene
             s.show();
         });
 
@@ -212,56 +215,63 @@ public class App extends Application {
         // Title Label
         Label titleLabel = new Label("Invoice Items");
         titleLabel.getStyleClass().add("label");
-    
+
         // Items Label
         Label itemsLabel = new Label("Items");
         itemsLabel.getStyleClass().add("instructions-text");
-    
+
         // Table-like VBox for item checkboxes and "Edit" buttons
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
-        
+
         // Mock Data for Items
-        String[] items = {"Medlemskap", "Träningskort", "Kajakplats", "Utökat träningskort"};
+        if (items.isEmpty()) {
+            items.add("Medlemskap");
+            items.add("Träningskort");
+            items.add("Kajakplats");
+            items.add("Utökat träningskort");
+
+        }
+
         for (String item : items) {
             HBox itemRow = new HBox(10);
-    
+
             // Checkbox
             CheckBox checkBox = new CheckBox();
-            // checkBox.getStyleClass().add("menu-button"); // Optional: Add consistent style
-    
+            // checkBox.getStyleClass().add("menu-button"); // Optional: Add consistent
+            // style
+
             // Item Name
             Label itemName = new Label(item);
             itemName.getStyleClass().add("instructions-text");
-    
+
             // Edit Button
             Button editButton = new Button("Edit");
             // editButton.getStyleClass().add("menu-button");
             editButton.setMinWidth(80);
-    
+
             itemRow.getChildren().addAll(checkBox, itemName, editButton);
             itemRow.setAlignment(Pos.CENTER_LEFT);
             itemList.getChildren().add(itemRow);
         }
-    
+
         // Tooltip Section
         VBox tooltipBox = new VBox();
-        tooltipBox.setPadding(new Insets(5,10,0,10));
+        tooltipBox.setPadding(new Insets(5, 10, 0, 10));
         tooltipBox.setAlignment(Pos.TOP_CENTER);
-        tooltipBox.setStyle("-fx-border-color: blue; -fx-border-radius: 5px");
-    
+
         Label tooltipTitle = new Label("Tool tip");
         tooltipTitle.getStyleClass().add("label");
-    
-        Text tooltipText = new Text(
-            "Remember to use the\n same name for the item\n here as it is declared in\n the provided CSV file."
-        );
 
-       // tooltipText.setWrapText(true);
+        Text tooltipText = new Text(
+                "Remember to use the\n same name for the item\n here as it is declared in\n the provided CSV file.");
+
+        // tooltipText.setWrapText(true);
         tooltipText.getStyleClass().add("instructions-text");
-    
+
         tooltipBox.getChildren().addAll(tooltipTitle, tooltipText);
-    
+        tooltipBox.getStyleClass().add("tooltip-box");
+
         // Buttons
         Button backButton = new Button("Back");
         backButton.getStyleClass().add("menu-button");
@@ -269,31 +279,92 @@ public class App extends Application {
         backButton.setOnAction(e -> {
             s.setScene(getMainLayout(s)); // Go back to the main menu
         });
-    
+
         Button addItemButton = new Button("Add new Item");
         addItemButton.getStyleClass().add("menu-button");
         addItemButton.setMinWidth(150);
-    
+        addItemButton.setOnAction(e -> {
+            s.setScene(AddNewItem(s));
+        });
+
         // Button Layout
         HBox buttonLayout = new HBox(20, backButton, addItemButton);
         buttonLayout.setAlignment(Pos.CENTER);
         buttonLayout.setPadding(new Insets(20));
-    
+
         // Combine everything into the main layout
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(30));
         mainLayout.setTop(titleLabel);
         BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
         BorderPane.setMargin(titleLabel, new Insets(0, 0, 20, 20));
-    
+
         mainLayout.setLeft(new VBox(10, itemsLabel, itemList));
         mainLayout.setRight(tooltipBox);
         mainLayout.setBottom(buttonLayout);
-    
+        mainLayout.getStyleClass().add("scene");
+
         // Scene
         Scene scene = new Scene(mainLayout, 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-    
+
+        return scene;
+    }
+
+    public Scene AddNewItem(Stage s) {
+
+        BorderPane window = new BorderPane();
+        VBox grid = new VBox(10);
+        grid.setPadding(new Insets(500, 10, 5, 10));
+        HBox labels = new HBox(125);
+        HBox TextFields = new HBox(10);
+        HBox buttonMeny = new HBox(100);
+
+        Label add = new Label("Add New Item");
+        add.getStyleClass().add("label");
+        add.setAlignment(Pos.CENTER);
+
+        Label nameToTextField = new Label("Name");
+        Label priceToTextField = new Label("Price");
+        Label articleNumberToTextField = new Label("Article Number");
+
+        labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
+
+        TextField name = new TextField();
+        TextField price = new TextField();
+        TextField articleNumber = new TextField();
+
+        TextFields.getChildren().addAll(name, price, articleNumber);
+
+        Button backButton = new Button("Back");
+        backButton.getStyleClass().add("menu-button");
+        backButton.setMinWidth(150);
+        backButton.setOnAction(e -> {
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        Button addItem = new Button("Add");
+        addItem.getStyleClass().add("menu-button");
+        addItem.setMinWidth(150);
+        addItem.setOnAction(e -> {
+
+            items.add(name.getCharacters().toString());
+
+            Alert added = new Alert(AlertType.INFORMATION);
+            added.setContentText("Item has been added");
+            added.showAndWait();
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        buttonMeny.getChildren().addAll(backButton, addItem);
+
+        grid.getChildren().addAll(add, labels, TextFields, buttonMeny);
+        grid.getStyleClass().add("vbox-container");
+
+        window.setCenter(grid);
+
+        Scene scene = new Scene(window, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
 }
