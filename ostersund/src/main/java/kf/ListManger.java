@@ -38,6 +38,11 @@ public class ListManger {
         invoiceItems.add(new InvoiceItem("Träningskort", "IO-AVG-43392", 880.0));
         invoiceItems.add(new InvoiceItem("Kajakplats", "IO-AVG-1478", 1450.0));
         invoiceItems.add(new InvoiceItem("Utökat träningskort", "IO-AVG-1479", 690.0));
+
+        for(int i = 0; i < invoiceItems.size() / 2; i++){
+            invoiceItems.get(i).toggleForAll();
+        }
+
         return invoiceItems;
     }
 

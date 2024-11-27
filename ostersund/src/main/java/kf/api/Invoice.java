@@ -14,7 +14,7 @@ public class Invoice {
     private String invoiceDate;
 
     @SerializedName("InvoiceRows")
-    private List<InvoiceRow> invoiceRows;
+    private List<InvoiceRow> invoiceRows = new ArrayList<InvoiceRow>();
 
     private transient String customerName; // Transient field for customer's name
 
@@ -39,8 +39,10 @@ public class Invoice {
         return invoiceRows;
     }
 
-    public void setInvoiceRows(List<InvoiceRow> invoiceRows) {
-        this.invoiceRows = invoiceRows;
+    public void addInvoiceRows(List<InvoiceRow> invoiceRows) {
+        for (InvoiceRow row : invoiceRows) {
+            this.invoiceRows.add(row);
+        }
     }
 
     public void addInvoiceRow (InvoiceRow row) {

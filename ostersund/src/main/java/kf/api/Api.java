@@ -209,7 +209,7 @@ public class Api {
         invoiceRows.add(invoiceRow);
 
         // Set InvoiceRows to Invoice
-        invoice.setInvoiceRows(invoiceRows);
+        invoice.addInvoiceRows(invoiceRows);
 
         // Serialize to JSON using Gson
         Gson gson = new Gson();

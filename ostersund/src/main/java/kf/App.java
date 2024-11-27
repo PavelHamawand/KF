@@ -46,7 +46,7 @@ public class App extends Application {
     private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile){
         //parsa filen
         Parser pars = new Parser(selectedFile);
-        ArrayList<Invoice> invoices = pars.toInvoices(lm.getInvoiceItems(), lm.getDiscounts(), 30);
+        ArrayList<Invoice> invoices = pars.toInvoices(lm.getExtraItems(), lm.getForAll(), lm.getDiscounts());
 
         for(Invoice n : invoices){
             StringBuilder items = new StringBuilder();

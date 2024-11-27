@@ -61,20 +61,26 @@ public class Parser {
           return data.get(index)[header.get(kategori)];
      }
 
-    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> invoiceItems, ArrayList<InvoiceItem> discountList, int validTime) throws IllegalArgumentException{ 
+    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> extraItems,
+        ArrayList<InvoiceItem> forAllList, 
+        ArrayList<InvoiceItem> discountList) 
+        throws IllegalArgumentException{ 
         ArrayList<Invoice> invoices = new ArrayList<>();
+      
+        List<InvoiceRow> forAllRows  = forAll(forAllList);
         
         for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
             Invoice tempInvoice = new Invoice();
             tempInvoice.setCustomerName(getColumnValue(x, "Förnamn") + " " + getColumnValue(x, "Efternamn"));
             tempInvoice.setCustomerNumber(getColumnValue( x, "IdrottsID"));
-
-            // Lägger till standard "For all" artiklar, lägger denna som kommentar just nu 
-            tempInvoice.setInvoiceRows(forAll(ListManger.getForAll())));
+            
+            // Lägger till standard "For all" artiklar
+            tempInvoice.addInvoiceRows(forAllRows);
+            
 
             //Om det finns extra tjänster
             if(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")] != null){
-                tempInvoice.setInvoiceRows(toRows(data.get(x)[header.get("")].split(","), invoiceItems));
+                tempInvoice.addInvoiceRows(toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), extraItems));
             }
             
             //Om det finns rabatt
@@ -82,7 +88,7 @@ public class Parser {
                 tempInvoice.addInvoiceRow(discount(data.get(x)[header.get("Rabatt")], discountList));
             }
 
-            tempInvoice.setInvoiceDate(LocalDate.now().plusDays(validTime).toString());
+            tempInvoice.setInvoiceDate(LocalDate.now().toString());
             invoices.add(tempInvoice);
         }
         return invoices;
