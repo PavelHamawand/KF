@@ -61,7 +61,7 @@ public class Parser {
           return data.get(index)[header.get(kategori)];
      }
 
-    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> invoiceItems, ArrayList<InvoiceItem> discountList, int validTime) {
+    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> invoiceItems, ArrayList<InvoiceItem> discountList, int validTime) throws IllegalArgumentException{ {
         ArrayList<Invoice> invoices = new ArrayList<>();
         
         for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
@@ -70,7 +70,7 @@ public class Parser {
             tempInvoice.setCustomerNumber(getColumnValue( x, "IdrottsID"));
 
             // Lägger till standard "For all" artiklar, lägger denna som kommentar just nu 
-            //tempInvoice.setInvoiceRows(forAll(ListManger.getForAll())));
+            tempInvoice.setInvoiceRows(forAll(ListManger.getForAll())));
 
             //Om det finns extra tjänster
             if(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")] != null){
@@ -93,6 +93,7 @@ public class Parser {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'forAll'");
     }
+    
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter){
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for(String item : items){

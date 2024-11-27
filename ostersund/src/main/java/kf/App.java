@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
+import javafx.scene.control.TextField;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Insets;
@@ -14,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -30,6 +31,8 @@ import kf.api.InvoiceRow;
 
 public class App extends Application {
     private File selectedFile;
+    private ArrayList<String> items = new ArrayList<>();
+    private ListManger lm = new ListManger();
 
     @Override
     public void start(Stage s) {
@@ -43,7 +46,7 @@ public class App extends Application {
     private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile){
         //parsa filen
         Parser pars = new Parser(selectedFile);
-        ArrayList<Invoice> invoices = pars.toInvoices(InvoiceItem.testInvoiceItems(), InvoiceItem.testDiscountList(), 30);
+        ArrayList<Invoice> invoices = pars.toInvoices(lm.getInvoiceItems(), lm.getDiscounts(), 30);
 
         for(Invoice n : invoices){
             StringBuilder items = new StringBuilder();
@@ -143,10 +146,8 @@ public class App extends Application {
         invoiceItemsButton.getStyleClass().add("menu-button");
 
         invoiceItemsButton.setOnAction(e -> {
-            Alert alert = new Alert(AlertType.INFORMATION);
-            alert.setHeaderText("Feature not yet implemented");
-            alert.setContentText("Sends you to a new scene when implemented.");
-            alert.showAndWait();
+            s.setScene(getInvoiceItemsScene(s)); // Switch to invoices scene
+            s.show();
         });
 
         Button exitButton = new Button("Exit");
@@ -229,7 +230,7 @@ public class App extends Application {
         backButton.getStyleClass().add("menu-button");
 
         backButton.setOnAction(e -> {
-            s.setScene(getMainLayout(s)); // Switch to invoices scene
+            s.setScene(getMainLayout(s)); // Switch to main scene
             s.show();
         });
 
@@ -261,4 +262,221 @@ public class App extends Application {
 
         return scene;
     }
+
+    public Scene getInvoiceItemsScene(Stage s) {
+        // Title Label
+        Label titleLabel = new Label("Invoice Items");
+        titleLabel.getStyleClass().add("label");
+
+        // Items Label
+        Label itemsLabel = new Label("Items");
+        itemsLabel.getStyleClass().add("instructions-text");
+
+        // Table-like VBox for item checkboxes and "Edit" buttons
+        VBox itemList = new VBox(10);
+        itemList.setPadding(new Insets(20));
+
+        // Mock Data for Items
+        if (items.isEmpty()) {
+            items.add("Medlemskap");
+            items.add("Träningskort");
+            items.add("Kajakplats");
+            items.add("Utökat träningskort");
+
+        }
+
+        for (String item : items) {
+            HBox itemRow = new HBox(10);
+
+            // Checkbox
+            CheckBox checkBox = new CheckBox();
+            // checkBox.getStyleClass().add("menu-button"); // Optional: Add consistent
+            // style
+
+            // Item Name
+            Label itemName = new Label(item);
+            itemName.getStyleClass().add("instructions-text");
+
+            // Edit Button
+            Button editButton = new Button("Edit");
+            editButton.setOnAction(e -> s.setScene(EditItem(s, item)));
+            // editButton.getStyleClass().add("menu-button");
+            editButton.setMinWidth(80);
+
+            itemRow.getChildren().addAll(checkBox, itemName, editButton);
+            itemRow.setAlignment(Pos.CENTER_LEFT);
+            itemList.getChildren().add(itemRow);
+        }
+
+        // Tooltip Section
+        VBox tooltipBox = new VBox();
+        tooltipBox.setPadding(new Insets(5, 10, 0, 10));
+        tooltipBox.setAlignment(Pos.TOP_CENTER);
+
+        Label tooltipTitle = new Label("Tool tip");
+        tooltipTitle.getStyleClass().add("label");
+
+        Text tooltipText = new Text(
+                "Remember to use the\n same name for the item\n here as it is declared in\n the provided CSV file.");
+
+        // tooltipText.setWrapText(true);
+        tooltipText.getStyleClass().add("instructions-text");
+
+        tooltipBox.getChildren().addAll(tooltipTitle, tooltipText);
+        tooltipBox.getStyleClass().add("tooltip-box");
+
+        // Buttons
+        Button backButton = new Button("Back");
+        backButton.getStyleClass().add("menu-button");
+        backButton.setMinWidth(100);
+        backButton.setOnAction(e -> {
+            s.setScene(getMainLayout(s)); // Go back to the main menu
+        });
+
+        Button addItemButton = new Button("Add new Item");
+        addItemButton.getStyleClass().add("menu-button");
+        addItemButton.setMinWidth(150);
+        addItemButton.setOnAction(e -> {
+            s.setScene(AddNewItem(s));
+        });
+
+        // Button Layout
+        HBox buttonLayout = new HBox(20, backButton, addItemButton);
+        buttonLayout.setAlignment(Pos.CENTER);
+        buttonLayout.setPadding(new Insets(20));
+
+        // Combine everything into the main layout
+        BorderPane mainLayout = new BorderPane();
+        mainLayout.setPadding(new Insets(30));
+        mainLayout.setTop(titleLabel);
+        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
+        BorderPane.setMargin(titleLabel, new Insets(0, 0, 20, 20));
+
+        mainLayout.setLeft(new VBox(10, itemsLabel, itemList));
+        mainLayout.setRight(tooltipBox);
+        mainLayout.setBottom(buttonLayout);
+        mainLayout.getStyleClass().add("scene");
+
+        // Scene
+        Scene scene = new Scene(mainLayout, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+
+        return scene;
+    }
+
+    public Scene AddNewItem(Stage s) {
+
+        BorderPane window = new BorderPane();
+        VBox grid = new VBox(10);
+        grid.setPadding(new Insets(500, 10, 5, 10));
+        HBox labels = new HBox(125);
+        HBox TextFields = new HBox(10);
+        HBox buttonMeny = new HBox(100);
+
+        Label add = new Label("Add New Item");
+        add.getStyleClass().add("label");
+        add.setAlignment(Pos.CENTER);
+
+        Label nameToTextField = new Label("Name");
+        Label priceToTextField = new Label("Price");
+        Label articleNumberToTextField = new Label("Article Number");
+
+        labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
+
+        TextField name = new TextField();
+        TextField price = new TextField();
+        TextField articleNumber = new TextField();
+
+        TextFields.getChildren().addAll(name, price, articleNumber);
+
+        Button backButton = new Button("Back");
+        backButton.getStyleClass().add("menu-button");
+        backButton.setMinWidth(150);
+        backButton.setOnAction(e -> {
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        Button addItem = new Button("Add");
+        addItem.getStyleClass().add("menu-button");
+        addItem.setMinWidth(150);
+        addItem.setOnAction(e -> {
+
+            items.add(name.getCharacters().toString());
+
+            Alert added = new Alert(AlertType.INFORMATION);
+            added.setContentText("Item has been added");
+            added.showAndWait();
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        buttonMeny.getChildren().addAll(backButton, addItem);
+
+        grid.getChildren().addAll(add, labels, TextFields, buttonMeny);
+        grid.getStyleClass().add("vbox-container");
+
+        window.setCenter(grid);
+
+        Scene scene = new Scene(window, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
+    public Scene EditItem(Stage s, String string) { // som inparameter ska det skickas ett invoice item har sträng som
+                                                    // place holder så länge
+
+        BorderPane window = new BorderPane();
+        VBox grid = new VBox(10);
+        grid.setPadding(new Insets(500, 10, 5, 10));
+        HBox labels = new HBox(125);
+        HBox TextFields = new HBox(10);
+        HBox buttonMeny = new HBox(100);
+
+        Label edit = new Label("Edit Item");
+        edit.getStyleClass().add("label");
+        edit.setAlignment(Pos.CENTER);
+
+        Label nameToTextField = new Label("Name");
+        Label priceToTextField = new Label("Price");
+        Label articleNumberToTextField = new Label("Article Number");
+
+        labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
+
+        TextField name = new TextField(string);
+        TextField price = new TextField();
+        TextField articleNumber = new TextField();
+
+        TextFields.getChildren().addAll(name, price, articleNumber);
+
+        Button backButton = new Button("Back");
+        backButton.getStyleClass().add("menu-button");
+        backButton.setMinWidth(150);
+        backButton.setOnAction(e -> {
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        Button addItem = new Button("Add the edited item");
+        addItem.getStyleClass().add("menu-button");
+        addItem.setMinWidth(150);
+        addItem.setOnAction(e -> {
+            items.remove(string);
+            items.add(name.getCharacters().toString());
+
+            Alert edited = new Alert(AlertType.INFORMATION);
+            edited.setContentText("Item has been updated");
+            edited.showAndWait();
+            s.setScene(getInvoiceItemsScene(s));
+        });
+
+        buttonMeny.getChildren().addAll(backButton, addItem);
+
+        grid.getChildren().addAll(edit, labels, TextFields, buttonMeny);
+        grid.getStyleClass().add("vbox-container");
+
+        window.setCenter(grid);
+
+        Scene scene = new Scene(window, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
 }
