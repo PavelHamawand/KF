@@ -11,8 +11,18 @@ public class ListManger {
     public ListManger() {
         this.discounts = initDiscounts();
         this.invoiceItems = initInvoiceItems();
-        this.forAll = initForAll();
-        this.extraItems = InvoiceItem.testInvoiceItems();
+        //skapar forAll listan
+        this.forAll = new ArrayList<>();
+        
+        //skapar extraItems listan och fyller den med alla items som inte är för alla vet ej om detta är rätt men tolkar det så av den bilden
+        this.extraItems = new ArrayList<>();
+        for (InvoiceItem item : invoiceItems) {
+            if (item.forAll) {
+                this.forAll.add(item);
+            } else {
+                this.extraItems.add(item);
+            }
+        }
     }
 
     private ArrayList<InvoiceItem> initForAll() {

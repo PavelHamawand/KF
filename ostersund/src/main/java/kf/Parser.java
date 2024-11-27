@@ -61,7 +61,7 @@ public class Parser {
           return data.get(index)[header.get(kategori)];
      }
 
-    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> invoiceItems, ArrayList<InvoiceItem> discountList, int validTime) throws IllegalArgumentException{ {
+    public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> invoiceItems, ArrayList<InvoiceItem> discountList, int validTime) throws IllegalArgumentException{ 
         ArrayList<Invoice> invoices = new ArrayList<>();
         
         for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
@@ -88,10 +88,30 @@ public class Parser {
         return invoices;
     }
 
-
-    private List<InvoiceRow> forAll(ArrayList<InvoiceItem> forAll) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'forAll'");
+    //gör en invoiceRow med de items som är för alla, ska denna ha mer error checking?
+    private List<InvoiceRow> forAll(ArrayList<InvoiceItem> forAll) throws IllegalArgumentException{
+        List<InvoiceRow> invoiceRows = new ArrayList<>();
+        double rabatt = 0.8; // byt ut just nu 20% rabatt 
+        if(forAll == null){
+            throw new IllegalArgumentException("Det finns inga items för alla");
+        }
+        try {
+            for (InvoiceItem item : forAll) {
+                if (item.forAll) {
+                    InvoiceRow row = new InvoiceRow();
+                    row.setArticleName(item.key);
+                    row.setArticleNumber(item.articleNbr);
+                    row.setDeliveredQuantity(1); // ska denna alltid vara 1? varför inte hårdkoda isåfall?
+                    row.setPrice(item.price * rabatt);
+                    invoiceRows.add(row);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Något gick fel vid skapandet av rabatterna för alla");
+            e.printStackTrace();
+        }
+        
+        return invoiceRows;
     }
     
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter){
