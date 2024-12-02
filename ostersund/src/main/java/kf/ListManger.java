@@ -1,8 +1,11 @@
 package kf;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class ListManger {
+public class ListManger implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private ArrayList<InvoiceItem> discounts;
     private ArrayList<InvoiceItem> invoiceItems;
     private ArrayList<InvoiceItem> forAll;
@@ -11,11 +14,12 @@ public class ListManger {
     public ListManger() {
         this.discounts = initDiscounts();
         this.invoiceItems = initInvoiceItems();
-        //skapar forAll listan
         this.forAll = new ArrayList<>();
-        
-        //skapar extraItems listan och fyller den med alla items som inte är för alla vet ej om detta är rätt men tolkar det så av den bilden
         this.extraItems = new ArrayList<>();
+        sortList();
+        
+    }
+    private void sortList() {
         for (InvoiceItem item : invoiceItems) {
             if (item.forAll) {
                 this.forAll.add(item);
@@ -33,20 +37,20 @@ public class ListManger {
     }
 
     private ArrayList<InvoiceItem> initInvoiceItems() {
-        ArrayList<InvoiceItem>  invoiceItems = new ArrayList<InvoiceItem>();
+        ArrayList<InvoiceItem> invoiceItems = new ArrayList<InvoiceItem>();
         invoiceItems.add(new InvoiceItem("Medlemsavgift", "IO-AVG-2743", 105.0));
         invoiceItems.add(new InvoiceItem("Träningskort", "IO-AVG-43392", 880.0));
         invoiceItems.add(new InvoiceItem("Kajakplats", "IO-AVG-1478", 1450.0));
         invoiceItems.add(new InvoiceItem("Utökat träningskort", "IO-AVG-1479", 690.0));
 
-        for(int i = 0; i < invoiceItems.size() / 2; i++){
+        for (int i = 0; i < invoiceItems.size() / 2; i++) {
             invoiceItems.get(i).toggleForAll();
         }
 
         return invoiceItems;
     }
 
-    private ArrayList<InvoiceItem> initDiscounts(){
+    private ArrayList<InvoiceItem> initDiscounts() {
         ArrayList<InvoiceItem> discountList = new ArrayList<InvoiceItem>();
         discountList.add(new InvoiceItem("1", "R1", -200));
         discountList.add(new InvoiceItem("2", "R2", -400));
@@ -54,26 +58,31 @@ public class ListManger {
         return discountList;
     }
 
+    public void editItem(InvoiceItem item, String name, String articleNbr, double price) {
+        invoiceItems.remove(item);
+        InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
+        invoiceItems.add(newItem);
+        System.out.println("Item edited" + newItem.price);
+    }
 
+    public void addInvoiceItem(String name, String articleNbr, double price) throws IllegalArgumentException {
+        InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
+        if (invoiceItems.contains(newItem)) {
+            throw new IllegalArgumentException("Article number already exists");
+        } else
+            invoiceItems.add(newItem);
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    public void toggleForAll(InvoiceItem item) {
+        item.toggleForAll();
+        if(!item.forAll) {
+            forAll.remove(item);
+            extraItems.add(item);
+        } else {
+            extraItems.remove(item);
+            forAll.add(item);
+        }
+    }
 
     public ArrayList<InvoiceItem> getDiscounts() {
         return discounts;
@@ -107,5 +116,5 @@ public class ListManger {
         this.forAll = forAll;
     }
     
-}
 
+}

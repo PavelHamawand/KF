@@ -9,7 +9,6 @@ public class InvoiceRow {
     @SerializedName("DeliveredQuantity")
     private int deliveredQuantity;
 
-
     private transient double price;
 
     private transient String articleName; // Transient field for article's name

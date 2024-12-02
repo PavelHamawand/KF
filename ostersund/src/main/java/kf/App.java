@@ -1,8 +1,12 @@
 
 package kf;
 
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.scene.control.TextField;
@@ -31,8 +35,7 @@ import kf.api.InvoiceRow;
 
 public class App extends Application {
     private File selectedFile;
-    private ArrayList<String> items = new ArrayList<>();
-    private ListManger lm = new ListManger();
+    private ListManger lm = null;
 
     @Override
     public void start(Stage s) {
@@ -40,7 +43,36 @@ public class App extends Application {
         s.setTitle("KF Öresund");
         s.setScene(getSelectFileScene(s));
         s.show();
+        setListManager(this.lm);
 
+    }
+
+    private void setListManager(ListManger lm) {
+       try (FileInputStream fileIn = new FileInputStream("listManger.ser");
+             ObjectInputStream in = new ObjectInputStream(fileIn)) {
+                this.lm = (ListManger) in.readObject();
+                System.out.println("Deserialized ListManger...");
+                // You can now use the deserialized listManger object
+        } catch (IOException i) {
+            this.lm = new ListManger();
+            System.out.println("Cant find listManger.ser, creating new ListManger...");
+        } catch (ClassNotFoundException c) {
+            System.out.println("ListManger class not found");
+        }
+    }
+
+    private void saveListManager(ListManger lm) {
+
+        try {
+            java.io.FileOutputStream fileOut = new java.io.FileOutputStream("listManger.ser");
+            java.io.ObjectOutputStream out = new java.io.ObjectOutputStream(fileOut);
+            out.writeObject(lm);
+            out.close();
+            fileOut.close();
+            System.out.println("Serialized data is saved in listManger.ser");
+        } catch (IOException i) {
+            i.printStackTrace();
+        }
     }
 
     private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile){
@@ -264,6 +296,7 @@ public class App extends Application {
     }
 
     public Scene getInvoiceItemsScene(Stage s) {
+        final ArrayList<InvoiceItem> items = lm.getInvoiceItems();
         // Title Label
         Label titleLabel = new Label("Invoice Items");
         titleLabel.getStyleClass().add("label");
@@ -276,25 +309,22 @@ public class App extends Application {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
 
-        // Mock Data for Items
-        if (items.isEmpty()) {
-            items.add("Medlemskap");
-            items.add("Träningskort");
-            items.add("Kajakplats");
-            items.add("Utökat träningskort");
-
-        }
-
-        for (String item : items) {
+        for (InvoiceItem item : items) {
             HBox itemRow = new HBox(10);
 
             // Checkbox
             CheckBox checkBox = new CheckBox();
-            // checkBox.getStyleClass().add("menu-button"); // Optional: Add consistent
-            // style
+            if(item.forAll) {
+                checkBox.setSelected(true);
+            }
+            checkBox.setOnAction(e ->{
+                lm.toggleForAll(item);
+                saveListManager(lm);
+            }); // TODO: Add sorting logic to toggleForAll method
+            
 
             // Item Name
-            Label itemName = new Label(item);
+            Label itemName = new Label(item.key);
             itemName.getStyleClass().add("instructions-text");
 
             // Edit Button
@@ -331,6 +361,7 @@ public class App extends Application {
         backButton.setMinWidth(100);
         backButton.setOnAction(e -> {
             s.setScene(getMainLayout(s)); // Go back to the main menu
+            saveListManager(lm);
         });
 
         Button addItemButton = new Button("Add new Item");
@@ -401,11 +432,18 @@ public class App extends Application {
         addItem.setMinWidth(150);
         addItem.setOnAction(e -> {
 
-            items.add(name.getCharacters().toString());
-
+            try {
+                lm.addInvoiceItem(name.getText(), articleNumber.getText(), Double.parseDouble(price.getText()));
+            } catch (Exception e1) {
+                Alert added = new Alert(AlertType.ERROR);
+                added.setContentText(e1.getMessage());
+                added.showAndWait();
+            } 
+           
             Alert added = new Alert(AlertType.INFORMATION);
             added.setContentText("Item has been added");
             added.showAndWait();
+            saveListManager(lm);
             s.setScene(getInvoiceItemsScene(s));
         });
 
@@ -421,7 +459,7 @@ public class App extends Application {
         return scene;
     }
 
-    public Scene EditItem(Stage s, String string) { // som inparameter ska det skickas ett invoice item har sträng som
+    public Scene EditItem(Stage s, InvoiceItem item) { // som inparameter ska det skickas ett invoice item har sträng som
                                                     // place holder så länge
 
         BorderPane window = new BorderPane();
@@ -441,9 +479,9 @@ public class App extends Application {
 
         labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
 
-        TextField name = new TextField(string);
-        TextField price = new TextField();
-        TextField articleNumber = new TextField();
+        TextField name = new TextField(item.key);
+        TextField price = new TextField(String.valueOf(item.price));
+        TextField articleNumber = new TextField(item.articleNbr);
 
         TextFields.getChildren().addAll(name, price, articleNumber);
 
@@ -458,12 +496,14 @@ public class App extends Application {
         addItem.getStyleClass().add("menu-button");
         addItem.setMinWidth(150);
         addItem.setOnAction(e -> {
-            items.remove(string);
-            items.add(name.getCharacters().toString());
+           
+           lm.editItem(item, name.getText(), articleNumber.getText(), Double.parseDouble(price.getText()));
+           
 
             Alert edited = new Alert(AlertType.INFORMATION);
             edited.setContentText("Item has been updated");
             edited.showAndWait();
+            saveListManager(lm);
             s.setScene(getInvoiceItemsScene(s));
         });
 
