@@ -109,7 +109,6 @@ public class Parser {
     //gör en invoiceRow med de items som är för alla, ska denna ha mer error checking?
     private List<InvoiceRow> forAll(ArrayList<InvoiceItem> forAll) throws IllegalArgumentException{
         List<InvoiceRow> invoiceRows = new ArrayList<>();
-        //double rabatt = 0.8; // byt ut just nu 20% rabatt 
         if(forAll == null){
             throw new IllegalArgumentException("Det finns inga items för alla");
         }
