@@ -79,14 +79,26 @@ public class Parser {
             
 
             //Om det finns extra tjänster
-            if(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")] != null){
+            try {
+                if(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")] != null){
                 tempInvoice.addInvoiceRows(toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), extraItems));
+                }
+            } catch (Exception e) {
+                System.out.println("Något gick fel vid skapandet av extra tjänster");
+                e.printStackTrace();
             }
             
+            
             //Om det finns rabatt
-            if(data.get(x)[header.get("Rabatt")] != null){
+            try {
+                if(data.get(x)[header.get("Rabatt")] != null){
                 tempInvoice.addInvoiceRow(discount(data.get(x)[header.get("Rabatt")], discountList));
+                }
+            } catch (Exception e) {
+                System.out.println("Något gick fel vid skapandet av rabatten");
+                e.printStackTrace();
             }
+            
 
             tempInvoice.setInvoiceDate(LocalDate.now().toString());
             invoices.add(tempInvoice);
@@ -97,7 +109,7 @@ public class Parser {
     //gör en invoiceRow med de items som är för alla, ska denna ha mer error checking?
     private List<InvoiceRow> forAll(ArrayList<InvoiceItem> forAll) throws IllegalArgumentException{
         List<InvoiceRow> invoiceRows = new ArrayList<>();
-        double rabatt = 0.8; // byt ut just nu 20% rabatt 
+        //double rabatt = 0.8; // byt ut just nu 20% rabatt 
         if(forAll == null){
             throw new IllegalArgumentException("Det finns inga items för alla");
         }
@@ -108,7 +120,7 @@ public class Parser {
                     row.setArticleName(item.key);
                     row.setArticleNumber(item.articleNbr);
                     row.setDeliveredQuantity(1); // ska denna alltid vara 1? varför inte hårdkoda isåfall?
-                    row.setPrice(item.price * rabatt);
+                    row.setPrice(item.price);
                     invoiceRows.add(row);
                 }
             }

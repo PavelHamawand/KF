@@ -41,6 +41,7 @@ public class ListManger implements Serializable {
         invoiceItems.add(new InvoiceItem("Medlemsavgift", "IO-AVG-2743", 105.0));
         invoiceItems.add(new InvoiceItem("Träningskort", "IO-AVG-43392", 880.0));
         invoiceItems.add(new InvoiceItem("Kajakplats", "IO-AVG-1478", 1450.0));
+        invoiceItems.add(new InvoiceItem("Kajakplats x2", "IO-AVG-1826", 1450.0));
         invoiceItems.add(new InvoiceItem("Utökat träningskort", "IO-AVG-1479", 690.0));
 
         for (int i = 0; i < invoiceItems.size() / 2; i++) {
@@ -52,9 +53,9 @@ public class ListManger implements Serializable {
 
     private ArrayList<InvoiceItem> initDiscounts() {
         ArrayList<InvoiceItem> discountList = new ArrayList<InvoiceItem>();
-        discountList.add(new InvoiceItem("1", "R1", -200));
-        discountList.add(new InvoiceItem("2", "R2", -400));
-        discountList.add(new InvoiceItem("3", "R3", -600));
+        discountList.add(new InvoiceItem("Rabatt x1", "IO-AVG-1480", -200));
+        discountList.add(new InvoiceItem("Rabatt x2", "IO-AVG-1481", -400));
+        discountList.add(new InvoiceItem("Rabatt x3", "IO-AVG-1482", -600));
         return discountList;
     }
 
