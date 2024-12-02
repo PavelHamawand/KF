@@ -21,10 +21,20 @@ public class ListManger implements Serializable {
     }
     private void sortList() {
         for (InvoiceItem item : invoiceItems) {
+            
             if (item.forAll) {
-                this.forAll.add(item);
-            } else {
-                this.extraItems.add(item);
+                
+                if(forAll.contains(item)) {
+                    continue;
+                }
+                else this.forAll.add(item);
+            } 
+
+            else if (extraItems.contains(item)) {
+                continue;
+            } 
+            else {
+                    extraItems.add(item);
             }
         }
     }
@@ -61,8 +71,11 @@ public class ListManger implements Serializable {
 
     public void editItem(InvoiceItem item, String name, String articleNbr, double price) {
         invoiceItems.remove(item);
+        extraItems.remove(item);
+        forAll.remove(item);
         InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
         invoiceItems.add(newItem);
+        sortList();
         System.out.println("Item edited" + newItem.price);
     }
 
