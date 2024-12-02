@@ -41,7 +41,17 @@
     -fx-background-color: white;
 }
 
+.remove-button {
+    -fx-background-color: red;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
 
+.remove-button:hover {
+    -fx-background-color: darkred;
+}
 
 
 

@@ -435,7 +435,7 @@ public class App extends Application {
         grid.setPadding(new Insets(500, 10, 5, 10));
         HBox labels = new HBox(125);
         HBox TextFields = new HBox(10);
-        HBox buttonMeny = new HBox(100);
+        HBox buttonMenu = new HBox(10);
 
         Label edit = new Label("Edit Item");
         edit.getStyleClass().add("label");
@@ -455,14 +455,16 @@ public class App extends Application {
 
         Button backButton = new Button("Back");
         backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(150);
+        backButton.setMinWidth(100);
+        backButton.setMaxWidth(150);
         backButton.setOnAction(e -> {
             s.setScene(getInvoiceItemsScene(s));
         });
 
         Button addItem = new Button("Add the edited item");
         addItem.getStyleClass().add("menu-button");
-        addItem.setMinWidth(150);
+        addItem.setMinWidth(100);
+        addItem.setMaxWidth(150);
         addItem.setOnAction(e -> {
             items.remove(string);
             items.add(name.getCharacters().toString());
@@ -473,9 +475,24 @@ public class App extends Application {
             s.setScene(getInvoiceItemsScene(s));
         });
 
-        buttonMeny.getChildren().addAll(backButton, addItem);
+        // Lägg till Remove-knappen
+Button removeItemButton = new Button("Remove");
+removeItemButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
+removeItemButton.setMinWidth(100);
+removeItemButton.setMaxWidth(150);
+removeItemButton.setOnAction(e -> {
+    items.remove(string); // Ta bort objektet
+    Alert removed = new Alert(AlertType.INFORMATION);
+    removed.setContentText("Item has been removed");
+    removed.showAndWait();
+    s.setScene(getInvoiceItemsScene(s)); // Tillbaka till huvudlistan
+});
 
-        grid.getChildren().addAll(edit, labels, TextFields, buttonMeny);
+// Lägg till alla knappar i HBox
+buttonMenu.getChildren().addAll(backButton, addItem, removeItemButton);
+buttonMenu.setAlignment(Pos.CENTER_LEFT);
+
+        grid.getChildren().addAll(edit, labels, TextFields, buttonMenu);
         grid.getStyleClass().add("vbox-container");
 
         window.setCenter(grid);
@@ -647,7 +664,8 @@ public class App extends Application {
         grid.setPadding(new Insets(500, 10, 5, 10));
         HBox labels = new HBox(115);
         HBox TextFields = new HBox(10);
-        HBox buttonMeny = new HBox(100);
+        HBox buttonMeny = new HBox(10);
+        buttonMeny.setAlignment(Pos.CENTER_LEFT);
 
         Label edit = new Label("Edit discount");
         edit.getStyleClass().add("label");
@@ -667,14 +685,16 @@ public class App extends Application {
 
         Button backButton = new Button("Back");
         backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(150);
+        backButton.setMinWidth(100);
+        backButton.setMaxWidth(150);
         backButton.setOnAction(e -> {
             s.setScene(getDiscountScene(s));
         });
 
         Button addDiscountItem = new Button("Add the edited discount item");
         addDiscountItem.getStyleClass().add("menu-button");
-        addDiscountItem.setMinWidth(150);
+        addDiscountItem.setMinWidth(100);
+        addDiscountItem.setMaxWidth(150);
         addDiscountItem.setOnAction(e -> {
             discounts.remove(string);
             discounts.add(name.getCharacters().toString());
@@ -685,7 +705,23 @@ public class App extends Application {
             s.setScene(getDiscountScene(s));
         });
 
-        buttonMeny.getChildren().addAll(backButton, addDiscountItem);
+        // Lägg till Remove-knappen
+Button removeDiscountButton = new Button("Remove");
+removeDiscountButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
+removeDiscountButton.setMinWidth(100);
+removeDiscountButton.setMaxWidth(150);
+removeDiscountButton.setOnAction(e -> {
+    discounts.remove(string); // Ta bort objektet
+    Alert removed = new Alert(AlertType.INFORMATION);
+    removed.setContentText("Discount item has been removed");
+    removed.showAndWait();
+    s.setScene(getDiscountScene(s)); // Tillbaka till huvudlistan
+});
+
+// Lägg till alla knappar i HBox
+buttonMeny.getChildren().addAll(backButton, addDiscountItem, removeDiscountButton);
+
+
 
         grid.getChildren().addAll(edit, labels, TextFields, buttonMeny);
         grid.getStyleClass().add("vbox-container");
