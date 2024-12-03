@@ -11,7 +11,7 @@ public class InvoiceRow {
 
     private transient double price;
 
-    private transient String articleName; // Transient field for article's name
+    private transient String articleName; 
 
     // Getters and Setters
     public String getArticleNumber() {

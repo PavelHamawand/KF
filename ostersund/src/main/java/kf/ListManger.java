@@ -39,14 +39,6 @@ public class ListManger implements Serializable {
             }
         }
     }
-
-    private ArrayList<InvoiceItem> initForAll() {
-        ArrayList<InvoiceItem> forAll = new ArrayList<InvoiceItem>();
-        forAll.add(new InvoiceItem("Medlemsavgift", "IO-AVG-2743", 105.0));
-        forAll.add(new InvoiceItem("Träningskort", "IO-AVG-43392", 880.0));
-        return forAll;
-    }
-
     private ArrayList<InvoiceItem> initInvoiceItems() {
         ArrayList<InvoiceItem> invoiceItems = new ArrayList<InvoiceItem>();
         invoiceItems.add(new InvoiceItem("Medlemsavgift", "IO-AVG-2743", 105.0));
@@ -86,8 +78,6 @@ public class ListManger implements Serializable {
         discounts.add(newItem);
         System.out.println("Item edited" + newItem.price);
     }
-
-
 
     public void addInvoiceItem(String name, String articleNbr, double price) throws IllegalArgumentException {
         InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
@@ -131,32 +121,16 @@ public class ListManger implements Serializable {
         return discounts;
     }
 
-    public void setDiscounts(ArrayList<InvoiceItem> discounts) {
-        this.discounts = discounts;
-    }
-
     public ArrayList<InvoiceItem> getInvoiceItems() {
         return invoiceItems;
-    }
-
-    public void setInvoiceItems(ArrayList<InvoiceItem> invoiceItems) {
-        this.invoiceItems = invoiceItems;
     }
 
     public ArrayList<InvoiceItem> getExtraItems() {
         return extraItems;
     }
 
-    public void setExtraItems(ArrayList<InvoiceItem> extraItems) {
-        this.extraItems = extraItems;
-    }
-
     public ArrayList<InvoiceItem> getForAll() {
         return forAll;
-    }
-
-    public void setForAll(ArrayList<InvoiceItem> forAll) {
-        this.forAll = forAll;
     }
 
 }

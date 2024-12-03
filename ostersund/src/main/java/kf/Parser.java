@@ -155,8 +155,9 @@ public class Parser {
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter) {
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for (String item : items) {
+            item = item.trim();
             for (InvoiceItem invoiceItems : itemFilter) {
-                if (item.contains(invoiceItems.key)) {
+                if (item.equals(invoiceItems.key)) {
                     InvoiceRow tempInvoiceRow = new InvoiceRow();
                     tempInvoiceRow.setArticleName(invoiceItems.key);
                     tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);

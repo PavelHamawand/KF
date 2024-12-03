@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.annotations.SerializedName;
 
-import kf.InvoiceItem;
-
 public class Invoice {
     @SerializedName("CustomerNumber")
     private String customerNumber;
@@ -55,10 +53,5 @@ public class Invoice {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
-    }
-
-    public void setForAll(ArrayList<InvoiceItem> forAll) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setForAll'");
     }
 }
