@@ -19,6 +19,7 @@ public class ListManger implements Serializable {
         sortList();
         
     }
+    
     private void sortList() {
         for (InvoiceItem item : invoiceItems) {
             

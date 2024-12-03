@@ -10,8 +10,7 @@ public class InvoiceItem implements Serializable {
     public double price;
     public boolean forAll;
 
-    
-    public InvoiceItem (String key, String articleNbr, double price){
+    public InvoiceItem(String key, String articleNbr, double price) {
         this.key = key;
         this.articleNbr = articleNbr;
         this.price = price;
@@ -27,6 +26,3 @@ public class InvoiceItem implements Serializable {
         this.forAll = !this.forAll;
     }
 }
-
-
-
