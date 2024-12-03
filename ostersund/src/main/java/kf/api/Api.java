@@ -178,8 +178,8 @@ public class Api {
             if (responseCode == 201) {
                 sentInvoices++;
             } else
-                throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode +
-                        "\nFailed to send all invoices. Only " + sentInvoices + " out of " + invoices.size()
+                throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode + "\n" + response.body()
+                       + "\nFailed to send invoices. Only " + sentInvoices + " out of " + invoices.size()
                         + " invoices were sent.");
         }
         return sentInvoices;

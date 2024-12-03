@@ -25,14 +25,13 @@ public class Parser {
 
     @SuppressWarnings("unused")
     private ArrayList<String[]> parse() {
-        try (Scanner scan = new Scanner(file);) {
-            for (int i = 0; scan.hasNextLine(); i++) { // for loop för att kunna ha någon error checking i csv filen och
-                                                       // vet vilken rad det är. vetefan gör endå valideringen senare.
+        try (Scanner scan = new Scanner(file)) {
+            while (scan.hasNextLine()) {
                 String line = scan.nextLine();
-                data.add(line.split(";"));
+                data.add(parseLine(line));
             }
         } catch (FileNotFoundException e) {
-            System.out.println("gissningsvis ingen fil");
+            System.out.println("File not found");
             e.printStackTrace();
         }
 
@@ -54,6 +53,26 @@ public class Parser {
             System.out.print("\n");
         }
         return data;
+    }
+
+    private String[] parseLine(String line) {
+        ArrayList<String> fields = new ArrayList<>();
+        StringBuilder currentField = new StringBuilder();
+        boolean inQuotes = false;
+    
+        for (char c : line.toCharArray()) {
+            if (c == '"') {
+                inQuotes = !inQuotes; // Toggle the inQuotes flag
+            } else if (c == ',' && !inQuotes) {
+                fields.add(currentField.toString().trim());
+                currentField.setLength(0); // Reset the StringBuilder
+            } else {
+                currentField.append(c);
+            }
+        }
+        fields.add(currentField.toString().trim()); // Add the last field
+    
+        return fields.toArray(new String[0]);
     }
 
     private String getColumnValue(int index, String kategori) {
@@ -94,12 +113,11 @@ public class Parser {
 
             // Om det finns rabatt
             try {
-                if (data.get(x)[header.get("Rabatt")] != null) {
+                if (data.get(x)[header.get("Rabatt")] != "") {
                     tempInvoice.addInvoiceRow(discount(data.get(x)[header.get("Rabatt")], discountList));
                 }
             } catch (Exception e) {
                 System.out.println("Något gick fel vid skapandet av rabatten");
-                e.printStackTrace();
             }
 
             tempInvoice.setInvoiceDate(LocalDate.now().toString());
@@ -129,7 +147,6 @@ public class Parser {
         } catch (Exception e) {
             System.out.println("Något gick fel vid skapandet av rabatterna för alla");
             e.getMessage();
-            e.printStackTrace();
         }
 
         return invoiceRows;

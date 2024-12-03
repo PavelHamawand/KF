@@ -1,7 +1,6 @@
 
 package kf;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -48,11 +47,10 @@ public class App extends Application {
     }
 
     private void setListManager(ListManger lm) {
-       try (FileInputStream fileIn = new FileInputStream("listManger.ser");
-             ObjectInputStream in = new ObjectInputStream(fileIn)) {
-                this.lm = (ListManger) in.readObject();
-                System.out.println("Deserialized ListManger...");
-                // You can now use the deserialized listManger object
+        try (FileInputStream fileIn = new FileInputStream("listManger.ser");
+                ObjectInputStream in = new ObjectInputStream(fileIn)) {
+            this.lm = (ListManger) in.readObject();
+            System.out.println("Deserialized ListManger...");
         } catch (IOException i) {
             this.lm = new ListManger();
             System.out.println("Cant find listManger.ser, creating new ListManger...");
@@ -83,21 +81,36 @@ public class App extends Application {
         for (Invoice n : invoices) {
             StringBuilder items = new StringBuilder();
             double price = 0;
-            for (InvoiceRow r : n.getInvoiceRows()) {
-                if (r.getPrice() > 0) {
-                    items.append(r.getArticleName()).append(", ");
-                }
-                price += r.getPrice();
-            }
-            items.setLength(items.length() - 2);
+            ArrayList<InvoiceItem> excluded = lm.getForAll();
 
+            for (InvoiceRow r : n.getInvoiceRows()) {
+                price += r.getPrice();
+
+                boolean isExcluded = false;
+                if (r.getPrice() > 0) {
+                    for (InvoiceItem i : excluded) {
+                        if (i.articleNbr.equals(r.getArticleNumber())) {
+                            isExcluded = true;
+                            break;
+                        }
+                    }
+                    if (!isExcluded) {
+                        items.append(r.getArticleName()).append(", ");
+                    }
+                }   
+            }
+
+            if (items.length() > 0) {
+                items.setLength(items.length() - 2); // Remove the trailing comma and space
+            }
+        
+           
             List<String> row = new ArrayList<>();
             row.add(n.getCustomerName());
             row.add(items.toString());
             row.add(String.valueOf(price));
             invoiceTable.getItems().add(row);
-        }
-        ;
+        };
         return invoices;
     }
 
@@ -119,7 +132,7 @@ public class App extends Application {
             // TODO Auto-generated catch block
             e1.printStackTrace();
         }
-        System.out.println("Invoices sent to Fortnox" + sent);
+        System.out.println("Invoices sent to Fortnox " + sent);
     }
 
     public Scene getSelectFileScene(Stage s) {
@@ -319,14 +332,13 @@ public class App extends Application {
 
             // Checkbox
             CheckBox checkBox = new CheckBox();
-            if(item.forAll) {
+            if (item.forAll) {
                 checkBox.setSelected(true);
             }
-            checkBox.setOnAction(e ->{
+            checkBox.setOnAction(e -> {
                 lm.toggleForAll(item);
                 saveListManager(lm);
-            }); // TODO: Add sorting logic to toggleForAll method
-            
+            });
 
             // Item Name
             Label itemName = new Label(item.key);
@@ -443,8 +455,8 @@ public class App extends Application {
                 Alert added = new Alert(AlertType.ERROR);
                 added.setContentText(e1.getMessage());
                 added.showAndWait();
-            } 
-           
+            }
+
             Alert added = new Alert(AlertType.INFORMATION);
             added.setContentText("Item has been added");
             added.showAndWait();
@@ -464,8 +476,7 @@ public class App extends Application {
         return scene;
     }
 
-    public Scene EditItem(Stage s, InvoiceItem item) { // som inparameter ska det skickas ett invoice item har sträng som
-                                                    // place holder så länge
+    public Scene EditItem(Stage s, InvoiceItem item) {
 
         BorderPane window = new BorderPane();
         VBox grid = new VBox(10);
@@ -503,9 +514,8 @@ public class App extends Application {
         addItem.setMinWidth(100);
         addItem.setMaxWidth(150);
         addItem.setOnAction(e -> {
-           
-           lm.editItem(item, name.getText(), articleNumber.getText(), Double.parseDouble(price.getText()));
-           
+
+            lm.editItem(item, name.getText(), articleNumber.getText(), Double.parseDouble(price.getText()));
 
             Alert edited = new Alert(AlertType.INFORMATION);
             edited.setContentText("Item has been updated");
@@ -515,21 +525,22 @@ public class App extends Application {
         });
 
         // Lägg till Remove-knappen
-Button removeItemButton = new Button("Remove");
-removeItemButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
-removeItemButton.setMinWidth(100);
-removeItemButton.setMaxWidth(150);
-removeItemButton.setOnAction(e -> {
-    items.remove(string); // Ta bort objektet
-    Alert removed = new Alert(AlertType.INFORMATION);
-    removed.setContentText("Item has been removed");
-    removed.showAndWait();
-    s.setScene(getInvoiceItemsScene(s)); // Tillbaka till huvudlistan
-});
+        Button removeItemButton = new Button("Remove");
+        removeItemButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
+        removeItemButton.setMinWidth(100);
+        removeItemButton.setMaxWidth(150);
 
-// Lägg till alla knappar i HBox
-buttonMenu.getChildren().addAll(backButton, addItem, removeItemButton);
-buttonMenu.setAlignment(Pos.CENTER_LEFT);
+        removeItemButton.setOnAction(e -> {
+            lm.remove(item);
+            Alert removed = new Alert(AlertType.INFORMATION);
+            removed.setContentText("Item has been removed");
+            removed.showAndWait();
+            s.setScene(getInvoiceItemsScene(s)); // Tillbaka till huvudlistan
+        });
+
+        // Lägg till alla knappar i HBox
+        buttonMenu.getChildren().addAll(backButton, addItem, removeItemButton);
+        buttonMenu.setAlignment(Pos.CENTER_LEFT);
 
         grid.getChildren().addAll(edit, labels, TextFields, buttonMenu);
         grid.getStyleClass().add("vbox-container");
@@ -542,6 +553,7 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
     }
 
     public Scene getDiscountScene(Stage s) {
+        final ArrayList<InvoiceItem> discounts = lm.getDiscounts();
         // Title Label
         Label titleLabel = new Label("Discounts");
         titleLabel.getStyleClass().add("label");
@@ -554,20 +566,11 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
 
-        // Mock Data for Items
-        if (discounts.isEmpty()) {
-            discounts.add("Medlemskap");
-            discounts.add("Träningskort");
-            discounts.add("Kajakplats");
-            discounts.add("Utökat träningskort");
-
-        }
-
-        for (String item : discounts) {
+        for (InvoiceItem item : discounts) {
             HBox itemRow = new HBox(10);
 
             // Item Name
-            Label itemName = new Label(item);
+            Label itemName = new Label(item.key);
             itemName.getStyleClass().add("instructions-text");
 
             // Edit Button
@@ -603,6 +606,7 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
         backButton.getStyleClass().add("menu-button");
         backButton.setMinWidth(100);
         backButton.setOnAction(e -> {
+            saveListManager(lm);
             s.setScene(getMainLayout(s)); // Go back to the main menu
         });
 
@@ -674,7 +678,7 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
         addItem.setMinWidth(150);
         addItem.setOnAction(e -> {
 
-            discounts.add(name.getCharacters().toString());
+            lm.addDiscount(name.getText(), articleNumber.getText(), Double.parseDouble(amount.getText()));
 
             Alert added = new Alert(AlertType.INFORMATION);
             added.setContentText("Item has been added");
@@ -694,9 +698,7 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
         return scene;
     }
 
-    public Scene EditDiscountItem(Stage s, String string) { // som inparameter ska det skickas ett invoice item har
-                                                            // sträng som
-        // place holder så länge
+    public Scene EditDiscountItem(Stage s, InvoiceItem discount) {
 
         BorderPane window = new BorderPane();
         VBox grid = new VBox(10);
@@ -716,9 +718,9 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
 
         labels.getChildren().addAll(nameToTextField, amountToTextField, articleNumberToTextField);
 
-        TextField name = new TextField(string);
-        TextField amount = new TextField();
-        TextField articleNumber = new TextField();
+        TextField name = new TextField(discount.key);
+        TextField amount = new TextField(discount.price + "");
+        TextField articleNumber = new TextField(discount.articleNbr);
 
         TextFields.getChildren().addAll(name, amount, articleNumber);
 
@@ -735,8 +737,8 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
         addDiscountItem.setMinWidth(100);
         addDiscountItem.setMaxWidth(150);
         addDiscountItem.setOnAction(e -> {
-            discounts.remove(string);
-            discounts.add(name.getCharacters().toString());
+
+            lm.editDiscount(discount, name.getText(), articleNumber.getText(), Double.parseDouble(amount.getText()));
 
             Alert edited = new Alert(AlertType.INFORMATION);
             edited.setContentText("Item has been updated");
@@ -745,22 +747,21 @@ buttonMenu.setAlignment(Pos.CENTER_LEFT);
         });
 
         // Lägg till Remove-knappen
-Button removeDiscountButton = new Button("Remove");
-removeDiscountButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
-removeDiscountButton.setMinWidth(100);
-removeDiscountButton.setMaxWidth(150);
-removeDiscountButton.setOnAction(e -> {
-    discounts.remove(string); // Ta bort objektet
-    Alert removed = new Alert(AlertType.INFORMATION);
-    removed.setContentText("Discount item has been removed");
-    removed.showAndWait();
-    s.setScene(getDiscountScene(s)); // Tillbaka till huvudlistan
-});
+        Button removeDiscountButton = new Button("Remove");
+        removeDiscountButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
+        removeDiscountButton.setMinWidth(100);
+        removeDiscountButton.setMaxWidth(150);
 
-// Lägg till alla knappar i HBox
-buttonMeny.getChildren().addAll(backButton, addDiscountItem, removeDiscountButton);
+        removeDiscountButton.setOnAction(e -> {
+            lm.removeDiscount(discount);
+            Alert removed = new Alert(AlertType.INFORMATION);
+            removed.setContentText("Discount item has been removed");
+            removed.showAndWait();
+            s.setScene(getDiscountScene(s)); // Tillbaka till huvudlistan
+        });
 
-
+        // Lägg till alla knappar i HBox
+        buttonMeny.getChildren().addAll(backButton, addDiscountItem, removeDiscountButton);
 
         grid.getChildren().addAll(edit, labels, TextFields, buttonMeny);
         grid.getStyleClass().add("vbox-container");

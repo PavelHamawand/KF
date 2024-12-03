@@ -80,12 +80,29 @@ public class ListManger implements Serializable {
         System.out.println("Item edited" + newItem.price);
     }
 
+    public void editDiscount(InvoiceItem item, String name, String articleNbr, double price) {
+        discounts.remove(item);
+        InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
+        discounts.add(newItem);
+        System.out.println("Item edited" + newItem.price);
+    }
+
+
+
     public void addInvoiceItem(String name, String articleNbr, double price) throws IllegalArgumentException {
         InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
         if (invoiceItems.contains(newItem)) {
             throw new IllegalArgumentException("Article number already exists");
         } else
             invoiceItems.add(newItem);
+    }
+
+    public void addDiscount(String name, String articleNbr, double price) throws IllegalArgumentException {
+        InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
+        if (discounts.contains(newItem)) {
+            throw new IllegalArgumentException("Article number already exists");
+        } else
+            discounts.add(newItem);
     }
 
     public void toggleForAll(InvoiceItem item) {
@@ -97,6 +114,17 @@ public class ListManger implements Serializable {
             extraItems.remove(item);
             forAll.add(item);
         }
+    }
+
+    public void remove(InvoiceItem item) {
+        // Ta bort item från alla listor, snabbare och säkrare än att söka efter referensen i alla listor
+        invoiceItems.remove(item);
+        extraItems.remove(item);
+        forAll.remove(item);
+    }
+
+    public void removeDiscount(InvoiceItem item) {
+        discounts.remove(item);
     }
 
     public ArrayList<InvoiceItem> getDiscounts() {
@@ -130,6 +158,5 @@ public class ListManger implements Serializable {
     public void setForAll(ArrayList<InvoiceItem> forAll) {
         this.forAll = forAll;
     }
-    
 
 }
