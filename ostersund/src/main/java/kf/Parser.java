@@ -24,7 +24,7 @@ public class Parser {
     }
 
     @SuppressWarnings("unused")
-    private ArrayList<String[]> parse() {
+    private ArrayList<String[]> parse() throws IllegalArgumentException {
         try (Scanner scan = new Scanner(file)) {
             while (scan.hasNextLine()) {
                 String line = scan.nextLine();
@@ -37,6 +37,15 @@ public class Parser {
 
         for (int i = 0; i < data.get(0).length; i++) { // snyggare sätt att leta efter rätt column
             header.put(data.get(0)[i], i);
+        }
+
+        // Validering av CSV filen
+        if (!header.containsKey("Rabatt")) {
+            System.err.println("Rabatt saknas i CSV filen");
+            throw new IllegalArgumentException("Rabatt saknas i CSV filen");
+        } else if (!header.containsKey("Grupp/Lag/Arbetsrum/Familj")) {
+            System.err.println("Grupp/Lag/Arbetsrum/Familj saknas i CSV filen");
+            throw new IllegalArgumentException("Grupp/Lag/Arbetsrum/Familj saknas i CSV filen");
         }
 
         int setlenght = data.get(0).length; // validerar att alla rader har är lika långa.
@@ -59,7 +68,7 @@ public class Parser {
         ArrayList<String> fields = new ArrayList<>();
         StringBuilder currentField = new StringBuilder();
         boolean inQuotes = false;
-    
+
         for (char c : line.toCharArray()) {
             if (c == '"') {
                 inQuotes = !inQuotes; // Toggle the inQuotes flag
@@ -71,7 +80,7 @@ public class Parser {
             }
         }
         fields.add(currentField.toString().trim()); // Add the last field
-    
+
         return fields.toArray(new String[0]);
     }
 
@@ -102,7 +111,7 @@ public class Parser {
 
             // Om det finns extra tjänster
             try {
-                if (data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")] != null) {
+                if (!data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].isBlank()) {
                     tempInvoice.addInvoiceRows(
                             toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), extraItems));
                 }
@@ -113,11 +122,12 @@ public class Parser {
 
             // Om det finns rabatt
             try {
-                if (data.get(x)[header.get("Rabatt")] != "") {
+                if (!data.get(x)[header.get("Rabatt")].isBlank()) {
                     tempInvoice.addInvoiceRow(discount(data.get(x)[header.get("Rabatt")], discountList));
                 }
             } catch (Exception e) {
                 System.out.println("Något gick fel vid skapandet av rabatten");
+                e.printStackTrace();
             }
 
             tempInvoice.setInvoiceDate(LocalDate.now().toString());
@@ -145,7 +155,7 @@ public class Parser {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Något gick fel vid skapandet av rabatterna för alla");
+            System.out.println("Något gick fel vid skapandet av artiklarna för alla");
             e.getMessage();
         }
 
@@ -171,6 +181,9 @@ public class Parser {
     }
 
     private InvoiceRow discount(String discount, ArrayList<InvoiceItem> discountList) {
+        if (discount.equals(""))
+            throw new IllegalArgumentException("Rabatten är tom");
+
         for (InvoiceItem invoiceItems : discountList) {
             if (discount.contains(invoiceItems.key)) {
                 InvoiceRow tempInvoiceRow = new InvoiceRow();
