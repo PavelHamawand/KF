@@ -50,7 +50,7 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-graphics</artifactId>
             <version>21</version>
-            <classifier>mac</classifier> <!-- Ändra "mac" till "win" eller "linux" om du använder Windows eller Linux -->
+            <classifier>mac-aarch64</classifier> <!-- Ändra "mac" till "win" eller "linux" om du använder Windows eller Linux -->
         </dependency>
 
 

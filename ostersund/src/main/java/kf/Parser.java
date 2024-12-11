@@ -12,56 +12,50 @@ import kf.api.Invoice;
 import kf.api.InvoiceRow;
 
 public class Parser {
-    private ArrayList<String[]> data;
-    private File file;
-    private HashMap<String, Integer> header;
+    private final ArrayList<String[]> data = new ArrayList<>();
+    private final File file;
+    private final HashMap<String, Integer> header = new HashMap<>();
 
     public Parser(File file) {
-        this.data = new ArrayList<>();
         this.file = file;
-        header = new HashMap<>();
         parse();
     }
 
-    @SuppressWarnings("unused")
-    private ArrayList<String[]> parse() throws IllegalArgumentException {
+    private void parse() throws IllegalArgumentException {
         try (Scanner scan = new Scanner(file)) {
             while (scan.hasNextLine()) {
                 String line = scan.nextLine();
                 data.add(parseLine(line));
             }
         } catch (FileNotFoundException e) {
-            System.out.println("File not found");
-            e.printStackTrace();
+            throw new IllegalArgumentException("Fil hittades inte: " + file.getAbsolutePath(), e);
         }
 
-        for (int i = 0; i < data.get(0).length; i++) { // snyggare sätt att leta efter rätt column
+        if (data.isEmpty()) {
+            throw new IllegalArgumentException("CSV-filen är tom.");
+        }
+
+        for (int i = 0; i < data.get(0).length; i++) {
             header.put(data.get(0)[i], i);
         }
 
-        // Validering av CSV filen
+        validateCSV();
+    }
+
+    private void validateCSV() {
         if (!header.containsKey("Rabatt")) {
-            System.err.println("Rabatt saknas i CSV filen");
-            throw new IllegalArgumentException("Rabatt saknas i CSV filen");
-        } else if (!header.containsKey("Grupp/Lag/Arbetsrum/Familj")) {
-            System.err.println("Grupp/Lag/Arbetsrum/Familj saknas i CSV filen");
-            throw new IllegalArgumentException("Grupp/Lag/Arbetsrum/Familj saknas i CSV filen");
+            throw new IllegalArgumentException("Kolumnen 'Rabatt' saknas i CSV-filen.");
+        }
+        if (!header.containsKey("Grupp/Lag/Arbetsrum/Familj")) {
+            throw new IllegalArgumentException("Kolumnen 'Grupp/Lag/Arbetsrum/Familj' saknas i CSV-filen.");
         }
 
-        int setlenght = data.get(0).length; // validerar att alla rader har är lika långa.
+        int expectedLength = data.get(0).length;
         for (int i = 1; i < data.size(); i++) {
-            if (data.get(i).length != setlenght) {
-                System.err.println("nåt konstigt vid rad " + i);
+            if (data.get(i).length != expectedLength) {
+                throw new IllegalArgumentException("Fel antal kolumner på rad " + (i + 1));
             }
         }
-
-        for (int i = 1; i < data.size(); i++) {
-            for (int k = 0; k < data.get(i).length; k++) {
-                System.out.print(data.get(0)[k] + " = " + data.get(i)[k] + "   ");
-            }
-            System.out.print("\n");
-        }
-        return data;
     }
 
     private String[] parseLine(String line) {
@@ -71,131 +65,111 @@ public class Parser {
 
         for (char c : line.toCharArray()) {
             if (c == '"') {
-                inQuotes = !inQuotes; // Toggle the inQuotes flag
+                inQuotes = !inQuotes;
             } else if (c == ',' && !inQuotes) {
                 fields.add(currentField.toString().trim());
-                currentField.setLength(0); // Reset the StringBuilder
+                currentField.setLength(0);
             } else {
                 currentField.append(c);
             }
         }
-        fields.add(currentField.toString().trim()); // Add the last field
-
+        fields.add(currentField.toString().trim());
         return fields.toArray(new String[0]);
     }
 
-    private String getColumnValue(int index, String kategori) {
-        if (data.get(index)[header.get(kategori)] == null) {
-            System.out.println("A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
+    private String getColumnValue(int index, String columnName) {
+        Integer colIndex = header.get(columnName);
+        if (colIndex == null || index >= data.size() || colIndex >= data.get(index).length) {
             throw new IllegalArgumentException(
-                    "A value for" + kategori + "in row" + index + " does not exist in the CSV file.");
+                    "Värde för kolumn '" + columnName + "' på rad " + (index + 1) + " saknas i CSV-filen.");
         }
-        return data.get(index)[header.get(kategori)];
+        return data.get(index)[colIndex];
     }
 
     public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> extraItems,
-            ArrayList<InvoiceItem> forAllList,
-            ArrayList<InvoiceItem> discountList)
-            throws IllegalArgumentException {
+                                         ArrayList<InvoiceItem> forAllList,
+                                         ArrayList<InvoiceItem> discountList) {
         ArrayList<Invoice> invoices = new ArrayList<>();
+        List<InvoiceRow> forAllRows = createRowsForAll(forAllList);
 
-        List<InvoiceRow> forAllRows = forAll(forAllList);
+        for (int x = 1; x < data.size(); x++) {
+            Invoice invoice = new Invoice();
+            invoice.setCustomerName(getColumnValue(x, "Förnamn") + " " + getColumnValue(x, "Efternamn"));
+            invoice.setCustomerNumber(getColumnValue(x, "IdrottsID"));
+            invoice.addInvoiceRows(forAllRows);
 
-        for (int x = 1; x < data.size(); x++) { // börja på 1 för att skippa headern. går igenom alla kunder.
-            Invoice tempInvoice = new Invoice();
-            tempInvoice.setCustomerName(getColumnValue(x, "Förnamn") + " " + getColumnValue(x, "Efternamn"));
-            tempInvoice.setCustomerNumber(getColumnValue(x, "IdrottsID"));
-
-            // Lägger till standard "For all" artiklar
-            tempInvoice.addInvoiceRows(forAllRows);
-
-            // Om det finns extra tjänster
             try {
-                if (!data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].isBlank()) {
-                    tempInvoice.addInvoiceRows(
-                            toRows(data.get(x)[header.get("Grupp/Lag/Arbetsrum/Familj")].split(","), extraItems));
+                String groupValue = getColumnValue(x, "Grupp/Lag/Arbetsrum/Familj");
+                if (!groupValue.isBlank()) {
+                    invoice.addInvoiceRows(toRows(groupValue.split(","), extraItems));
                 }
             } catch (Exception e) {
-                System.out.println("Något gick fel vid skapandet av extra tjänster");
+                System.err.println("Fel vid skapandet av extra tjänster för rad " + (x + 1));
                 e.printStackTrace();
             }
 
-            // Om det finns rabatt
             try {
-                if (!data.get(x)[header.get("Rabatt")].isBlank()) {
-                    tempInvoice.addInvoiceRow(discount(data.get(x)[header.get("Rabatt")], discountList));
+                String discountValue = getColumnValue(x, "Rabatt");
+                if (!discountValue.isBlank()) {
+                    invoice.addInvoiceRow(createDiscountRow(discountValue, discountList));
                 }
             } catch (Exception e) {
-                System.out.println("Något gick fel vid skapandet av rabatten");
+                System.err.println("Fel vid skapandet av rabatten för rad " + (x + 1));
                 e.printStackTrace();
             }
 
-            tempInvoice.setInvoiceDate(LocalDate.now().toString());
-            invoices.add(tempInvoice);
+            invoice.setInvoiceDate(LocalDate.now().toString());
+            invoices.add(invoice);
         }
         return invoices;
     }
 
-    // gör en invoiceRow med de items som är för alla, ska denna ha mer error
-    // checking?
-    private List<InvoiceRow> forAll(ArrayList<InvoiceItem> forAll) throws IllegalArgumentException {
-        List<InvoiceRow> invoiceRows = new ArrayList<>();
-        if (forAll == null) {
-            throw new IllegalArgumentException("Det finns inga items för alla");
+    private List<InvoiceRow> createRowsForAll(ArrayList<InvoiceItem> forAllList) {
+        List<InvoiceRow> rows = new ArrayList<>();
+        if (forAllList == null) {
+            throw new IllegalArgumentException("Listan 'forAllList' är null.");
         }
-        try {
-            for (InvoiceItem item : forAll) {
-                if (item.forAll) {
-                    InvoiceRow row = new InvoiceRow();
-                    row.setArticleName(item.key);
-                    row.setArticleNumber(item.articleNbr);
-                    row.setDeliveredQuantity(1); // ska denna alltid vara 1? varför inte hårdkoda isåfall?
-                    row.setPrice(item.price);
-                    invoiceRows.add(row);
-                }
+        for (InvoiceItem item : forAllList) {
+            if (item.forAll) {
+                InvoiceRow row = new InvoiceRow();
+                row.setArticleName(item.key);
+                row.setArticleNumber(item.articleNbr);
+                row.setDeliveredQuantity(1);
+                row.setPrice(item.price);
+                rows.add(row);
             }
-        } catch (Exception e) {
-            System.out.println("Något gick fel vid skapandet av artiklarna för alla");
-            e.getMessage();
         }
-
-        return invoiceRows;
+        return rows;
     }
 
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter) {
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for (String item : items) {
-            item = item.trim();
-            for (InvoiceItem invoiceItems : itemFilter) {
-                if (item.equals(invoiceItems.key)) {
-                    InvoiceRow tempInvoiceRow = new InvoiceRow();
-                    tempInvoiceRow.setArticleName(invoiceItems.key);
-                    tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);
-                    tempInvoiceRow.setDeliveredQuantity(1);
-                    tempInvoiceRow.setPrice(invoiceItems.price);
-                    rows.add(tempInvoiceRow);
+            for (InvoiceItem invoiceItem : itemFilter) {
+                if (item.trim().equals(invoiceItem.key)) {
+                    InvoiceRow row = new InvoiceRow();
+                    row.setArticleName(invoiceItem.key);
+                    row.setArticleNumber(invoiceItem.articleNbr);
+                    row.setDeliveredQuantity(1);
+                    row.setPrice(invoiceItem.price);
+                    rows.add(row);
                 }
             }
         }
         return rows;
     }
 
-    private InvoiceRow discount(String discount, ArrayList<InvoiceItem> discountList) {
-        if (discount.isBlank())
-            throw new IllegalArgumentException("Rabatten är tom");
-
-        for (InvoiceItem invoiceItems : discountList) {
-            if (discount.contains(invoiceItems.key)) {
-                InvoiceRow tempInvoiceRow = new InvoiceRow();
-                tempInvoiceRow.setArticleName(invoiceItems.key);
-                tempInvoiceRow.setArticleNumber(invoiceItems.articleNbr);
-                tempInvoiceRow.setDeliveredQuantity(1);
-                tempInvoiceRow.setPrice(invoiceItems.price);
-                return tempInvoiceRow;
-            } else
-                throw new IllegalArgumentException("Rabatten finns inte i listan");
+    private InvoiceRow createDiscountRow(String discount, ArrayList<InvoiceItem> discountList) {
+        for (InvoiceItem item : discountList) {
+            if (discount.contains(item.key)) {
+                InvoiceRow row = new InvoiceRow();
+                row.setArticleName(item.key);
+                row.setArticleNumber(item.articleNbr);
+                row.setDeliveredQuantity(1);
+                row.setPrice(item.price);
+                return row;
+            }
         }
-        return null;
+        throw new IllegalArgumentException("Rabatten '" + discount + "' finns inte i listan.");
     }
-
 }

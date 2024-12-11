@@ -26,3 +26,4 @@ public class InvoiceItem implements Serializable {
         this.forAll = !this.forAll;
     }
 }
+
