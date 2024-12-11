@@ -173,8 +173,8 @@ public class App extends Application {
                     throw new IllegalArgumentException("Name and Article Number cannot be empty.");
                 }
 
-                InvoiceItem newItem = new InvoiceItem(name, articleNumber, price);
-                lm.getInvoiceItems().add(newItem);
+            
+                lm.addInvoiceItem(name, articleNumber, price);
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Item Added");
@@ -213,7 +213,11 @@ public class App extends Application {
                         lm.getInvoiceItems().remove(item);
                         stage.setScene(getInvoiceItemsScene(stage));
                     })
+                
             );
+            if (item.forAll) {
+                ((CheckBox) itemRow.getChildren().get(0)).setSelected(true);
+            }
             itemList.getChildren().add(itemRow);
         }
 
@@ -221,7 +225,10 @@ public class App extends Application {
                 "Remember to use the\nsame name for the item\nhere as it is declared in\nthe provided CSV file.");
 
         HBox buttonLayout = createHBox(Pos.CENTER, 20,
-                createButton("Back", "menu-button", e -> stage.setScene(getMainLayout(stage))),
+                createButton("Back", "menu-button", e -> {
+                    saveListManager(lm);
+                    stage.setScene(getMainLayout(stage));
+                }),
                 createButton("Add new Item", "menu-button", e -> stage.setScene(getAddItemScene(stage)))
         );
 
@@ -250,9 +257,14 @@ public class App extends Application {
         );
 
         Button saveButton = createButton("Save", "menu-button", e -> {
-            item.key = nameField.getText();
-            item.price = Double.parseDouble(priceField.getText());
-            item.articleNbr = articleNumberField.getText();
+             
+            try {
+                lm.editItem(item, nameField.getText(), item.articleNbr, item.price);
+            }
+            catch (IllegalArgumentException ex) {
+                showAlert("Invalid Input", ex.getMessage());
+                return;
+            }
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Item Updated");
@@ -264,7 +276,7 @@ public class App extends Application {
         });
 
         Button removeButton = createButton("Remove", "remove-button", e -> {
-            lm.getInvoiceItems().remove(item);
+            lm.remove(item);;
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Item Removed");
@@ -289,12 +301,12 @@ public class App extends Application {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
 
-        for (InvoiceItem discount : lm.getInvoiceItems()) {
+        for (InvoiceItem discount : lm.getDiscounts()) {
             HBox discountRow = createHBox(Pos.CENTER_LEFT, 10,
                     createLabel(discount.key, "instructions-text"),
                     createButton("Edit", "menu-button", e -> stage.setScene(getEditDiscountScene(stage, discount))),
                     createButton("Remove", "remove-button", e -> {
-                        lm.getDiscounts().remove(discount);
+                        lm.removeDiscount(discount);
                         stage.setScene(getDiscountScene(stage));
                     })
             );
@@ -305,7 +317,10 @@ public class App extends Application {
                 "Manage discounts here. Use names consistent with your CSV file.");
 
         HBox buttonLayout = createHBox(Pos.CENTER, 20,
-                createButton("Back", "menu-button", e -> stage.setScene(getMainLayout(stage))),
+                createButton("Back", "menu-button", e -> {
+                    saveListManager(lm);
+                    stage.setScene(getMainLayout(stage));
+                }),
                 createButton("Add new Discount", "menu-button", e -> stage.setScene(getAddDiscountScene(stage)))
         );
 
@@ -421,7 +436,6 @@ public class App extends Application {
         showAlert("Success", "Invoices sent to Fortnox: " + sent);
     }
 
-
     private void sendToFortnox(ArrayList<Invoice> invoices) {
         Api api = new Api();
         try {
@@ -495,9 +509,7 @@ public class App extends Application {
         return table;
     }
 
-
-
-       private void showAlert(String title, String content) {
+    private void showAlert(String title, String content) {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
