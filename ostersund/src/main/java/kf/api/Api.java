@@ -8,7 +8,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
@@ -25,10 +24,18 @@ public class Api {
     private String redirectURL;
     private HttpClient client;
 
-    public Api() {
+    public Api(File file) {
+        // Constructor able to change the env file for testing purposes 
+        setup(file);
 
-        // Environment variables
+    }
+
+    public Api() {
         File file = new File("ostersund/src/main/java/kf/api/env.txt");
+        setup(file);
+    }
+
+    private void setup(File file) {
         try {
             Scanner scanner = new Scanner(file);
             clientId = scanner.nextLine();
@@ -42,8 +49,6 @@ public class Api {
             e.printStackTrace();
             System.exit(1);
         }
-
-        
 
         // Temorary Server for authentication
         LocalServer server = new LocalServer();
@@ -59,7 +64,6 @@ public class Api {
         System.out.println("Please visit Auth URL: " + authURL);
         this.authCode = server.getAuthCode();
         this.getAccessToken();
-
     }
 
     private void enviorment() {
@@ -185,32 +189,13 @@ public class Api {
         return sentInvoices;
     }
 
-    public void createTestInvoice() {
+    public HttpResponse<String> sendInvoiceTest(Invoice invoice) {
         if (accessToken == null) {
             System.out.println("Access token is missing. Please authenticate first.");
-            return;
+            return null;
         }
 
         System.out.println("Creating test invoice...");
-
-        // Create the Invoice object
-        Invoice invoice = new Invoice();
-        invoice.setCustomerNumber("1");
-        invoice.setInvoiceDate("2024-11-11");
-
-        // Create InvoiceRow
-        InvoiceRow invoiceRow = new InvoiceRow();
-        invoiceRow.setArticleNumber("1");
-        invoiceRow.setDeliveredQuantity(1);
-        invoiceRow.setPrice(100);
-
-        // Add InvoiceRow to a list
-        List<InvoiceRow> invoiceRows = new ArrayList<>();
-        invoiceRows.add(invoiceRow);
-
-        // Set InvoiceRows to Invoice
-        invoice.addInvoiceRows(invoiceRows);
-
         // Serialize to JSON using Gson
         Gson gson = new Gson();
 
@@ -228,8 +213,9 @@ public class Api {
                 .POST(HttpRequest.BodyPublishers.ofString(invoiceJson))
                 .build();
 
+        HttpResponse<String> response = null;
         try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int responseCode = response.statusCode();
             if (responseCode == 201 || responseCode == 200) {
                 System.out.println("Test invoice created successfully!");
@@ -241,6 +227,27 @@ public class Api {
         } catch (IOException | InterruptedException e) {
             System.out.println("Error: " + e.getMessage());
             e.printStackTrace();
+        }
+       
+        return response;
+    }
+
+    public boolean removeInvoice(String invoiceNumber) throws IOException, InterruptedException {
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.fortnox.se/3/invoices/" + invoiceNumber + "/cancel"))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + accessToken)
+            .PUT(HttpRequest.BodyPublishers.noBody())
+            .build();
+
+        HttpResponse<String> respone = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if(respone.statusCode() == 200) {
+            return true;
+        } else {
+            System.out.println("Failed to remove invoice. HTTP Response Code: " + respone.statusCode());
+            System.out.println("Response: " + respone.body());
+            return false;
         }
     }
 }

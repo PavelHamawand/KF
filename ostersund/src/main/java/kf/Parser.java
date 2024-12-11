@@ -181,7 +181,7 @@ public class Parser {
     }
 
     private InvoiceRow discount(String discount, ArrayList<InvoiceItem> discountList) {
-        if (discount.equals(""))
+        if (discount.isBlank())
             throw new IllegalArgumentException("Rabatten är tom");
 
         for (InvoiceItem invoiceItems : discountList) {
