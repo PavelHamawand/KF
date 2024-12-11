@@ -1,6 +1,10 @@
 package kf;
 
-public class InvoiceItem { // dåligt namn icke plural
+import java.io.Serializable;
+
+public class InvoiceItem implements Serializable { 
+    private static final long serialVersionUID = 1L;
+
     public String key;
     public String articleNbr;
     public double price;
@@ -22,3 +26,4 @@ public class InvoiceItem { // dåligt namn icke plural
         this.forAll = !this.forAll;
     }
 }
+

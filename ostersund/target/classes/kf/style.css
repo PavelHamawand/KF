@@ -1,58 +1,58 @@
-/* Menu Label */
+/* Styling för allmänna etiketter */
 .label {
-    -fx-font-size: 20px;
-    -fx-text-fill: darkblue;
-    -fx-font-family: Arial;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
 }
 
-/* Menu Buttons */
-.menu-button {
-    -fx-background-color: #1E90FF;
-    -fx-text-fill: white;
-    -fx-font-size: 14px;
-    -fx-font-family: Arial;
-    -fx-padding: 10px;
-    -fx-background-radius: 5px;
-    
-}
-
-/* Instructions Text */
+/* Styling för instruktioner och textfält */
 .instructions-text {
     -fx-font-size: 14px;
-    -fx-text-fill: black;
-    -fx-font-family: Arial;
+    -fx-text-fill: #555;
 }
 
-/* VBox styling for border and spacing */
-.vbox-container {
-    -fx-padding: 20px;
-   
-}
-
-/* scene background color */
-.scene {
-    -fx-background-color: lightgrey;
-}
-
-.tooltip-box {
-    -fx-border-color: blue;
-    -fx-border-radius: 5px;
-    -fx-padding: 5px;
-    -fx-background-color: white;
-}
-
-.remove-button {
-    -fx-background-color: red;
+/* Styling för knappar */
+.menu-button {
+    -fx-background-color: #4a90e2;
     -fx-text-fill: white;
     -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-cursor: hand;
+    -fx-padding: 10px 20px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+}
+
+.menu-button:hover {
+    -fx-background-color: #357ab8;
+}
+
+/* Styling för knappen "Remove" */
+.remove-button {
+    -fx-background-color: #e94e77;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 10px 20px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
 }
 
 .remove-button:hover {
-    -fx-background-color: darkred;
+    -fx-background-color: #b23559;
 }
 
+/* Styling för huvudlayout */
+.scene {
+    -fx-background-color: #f0f0f0;
+}
 
+/* Styling för textfält */
+.text-field {
+    -fx-padding: 5px;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 5px;
+    -fx-background-color: white;
+}
 
-
+/* Styling för VBox och HBox */
+.vbox-container, .button-layout {
+    -fx-spacing: 10px;
+}

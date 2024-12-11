@@ -1,27 +1,13 @@
-
 package kf;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import javafx.scene.control.TextField;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -29,708 +15,493 @@ import kf.api.Api;
 import kf.api.Invoice;
 import kf.api.InvoiceRow;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class App extends Application {
     private File selectedFile;
-    private ArrayList<String> items = new ArrayList<>();
-    private ArrayList<String> discounts = new ArrayList<>();
-    private ListManger lm = new ListManger();
+    private ListManger lm = null;
 
     @Override
     public void start(Stage s) {
-
         s.setTitle("KF Öresund");
         s.setScene(getSelectFileScene(s));
         s.show();
-
+        setListManager(this.lm);
     }
 
-    private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile) {
-        // parsa filen
-        Parser pars = new Parser(selectedFile);
-        ArrayList<Invoice> invoices = pars.toInvoices(lm.getInvoiceItems(), lm.getDiscounts(), 30);
-
-        for (Invoice n : invoices) {
-            StringBuilder items = new StringBuilder();
-            double price = 0;
-            for (InvoiceRow r : n.getInvoiceRows()) {
-                if (r.getPrice() > 0) {
-                    items.append(r.getArticleName()).append(", ");
-                }
-                price += r.getPrice();
-            }
-            items.setLength(items.length() - 2);
-
-            List<String> row = new ArrayList<>();
-            row.add(n.getCustomerName());
-            row.add(items.toString());
-            row.add(String.valueOf(price));
-            invoiceTable.getItems().add(row);
+    private void setListManager(ListManger lm) {
+        try (FileInputStream fileIn = new FileInputStream("listManger.ser");
+                ObjectInputStream in = new ObjectInputStream(fileIn)) {
+            this.lm = (ListManger) in.readObject();
+            System.out.println("Deserialized ListManger...");
+        } catch (IOException i) {
+            this.lm = new ListManger();
+            System.out.println("Cant find listManger.ser, creating new ListManger...");
+        } catch (ClassNotFoundException c) {
+            System.out.println("ListManger class not found");
         }
-        ;
-        return invoices;
     }
 
-    private void getApi(ArrayList<Invoice> invoices) {
-        Api api = new Api();
-        int sent = 0;
+    private void saveListManager(ListManger lm) {
         try {
-
-            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
-            if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
-                try {
-                    desktop.browse(new java.net.URI("https://apps.fortnox.se/fs/fs/login.php#"));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-            sent = api.sendInvoiceList(invoices);
-        } catch (IOException | InterruptedException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            java.io.FileOutputStream fileOut = new java.io.FileOutputStream("listManger.ser");
+            java.io.ObjectOutputStream out = new java.io.ObjectOutputStream(fileOut);
+            out.writeObject(lm);
+            out.close();
+            fileOut.close();
+            System.out.println("Serialized data is saved in listManger.ser");
+        } catch (IOException i) {
+            i.printStackTrace();
         }
-        System.out.println("Invoices sent to Fortnox" + sent);
     }
 
-    public Scene getSelectFileScene(Stage s) {
-        Label titleLabel = new Label("Select your csv file");
-        titleLabel.getStyleClass().add("label");
+    private Scene getSelectFileScene(Stage stage) {
+        Label titleLabel = createLabel("Select your csv file", "label");
+        Label instructionLabel = createLabel("Please provide a correctly formatted csv", "instructions-text");
 
-        Label instructionLabel = new Label("Please provide a correctly formatted csv");
-        instructionLabel.getStyleClass().add("instructions-text");
-
-        FileChooser file = new FileChooser();
-        file.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
-        Button selectFile = new Button("Browse files...");
-        selectFile.getStyleClass().add("menu-button");
-
-        selectFile.setOnAction(event -> {
-            selectedFile = file.showOpenDialog(s);
+        Button selectFileButton = createButton("Browse files...", "menu-button", event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+            selectedFile = fileChooser.showOpenDialog(stage);
             if (selectedFile != null) {
-                s.setScene(getMainLayout(s));
-                s.show();
+                stage.setScene(getMainLayout(stage));
             }
         });
 
-        VBox box = new VBox(10, titleLabel, instructionLabel, selectFile);
-        box.getStyleClass().add("vbox-container");
-        box.setAlignment(Pos.CENTER);
+        VBox layout = createVBox(Pos.CENTER, 10, titleLabel, instructionLabel, selectFileButton);
+        layout.getStyleClass().add("vbox-container");
 
-        StackPane p = new StackPane(box);
-        p.getStyleClass().add("scene");
-
-        Scene scene = new Scene(p, 600, 400);
+        Scene scene = new Scene(new StackPane(layout), 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-
         return scene;
     }
 
-    public Scene getMainLayout(Stage s) {
-
-        VBox buttonMenu = new VBox(20);
+    private Scene getMainLayout(Stage stage) {
+        VBox buttonMenu = createVBox(Pos.CENTER_LEFT, 20,
+                createLabel("Menu:", "label"),
+                createMenuButton("Generate Invoice", stage, this::getInvoicesScene),
+                createMenuButton("Invoice Items", stage, this::getInvoiceItemsScene),
+                createMenuButton("Discounts", stage, this::getDiscountScene),
+                createButton("Exit", "menu-button", e -> stage.close())
+        );
         buttonMenu.setPadding(new Insets(30));
-        buttonMenu.setAlignment(Pos.CENTER_LEFT);
 
-        Label menuLabel = new Label("Menu:");
-        menuLabel.getStyleClass().add("label");
-
-        Button generateInvoiceButton = new Button("Generate Invoice");
-        generateInvoiceButton.setMinWidth(150);
-        generateInvoiceButton.getStyleClass().add("menu-button");
-
-        generateInvoiceButton.setOnAction(e -> {
-            s.setScene(getInvoicesScene(s)); // Switch to invoices scene
-            s.show();
-        });
-
-        Button invoiceItemsButton = new Button("Invoice Items");
-        invoiceItemsButton.setMinWidth(150);
-        invoiceItemsButton.getStyleClass().add("menu-button");
-
-        invoiceItemsButton.setOnAction(e -> {
-            s.setScene(getInvoiceItemsScene(s)); // Switch to invoices scene
-            s.show();
-        });
-
-        Button discountsButton = new Button("Discounts");
-        discountsButton.setMinWidth(150);
-        discountsButton.getStyleClass().add("menu-button");
-        discountsButton.setOnAction(e -> s.setScene(getDiscountScene(s)));
-
-        Button exitButton = new Button("Exit");
-        exitButton.setMinWidth(150);
-        exitButton.getStyleClass().add("menu-button");
-        exitButton.setOnAction(e -> s.close());
-
-        buttonMenu.getChildren().addAll(menuLabel, generateInvoiceButton, invoiceItemsButton, discountsButton,
-                exitButton);
-
-        VBox instructions = new VBox(10);
+        VBox instructions = createVBox(Pos.TOP_LEFT, 10,
+                createLabel("How to use:", "label"),
+                createText(
+                        "Generate Invoices:\nGenerates invoices based on your provided CSV file\n" +
+                                "with the use of your active invoice items.\n\n" +
+                                "Invoice Items:\nAdd the items you wish to have active\n" +
+                                "for your invoice generation."
+                ),
+                createButton("Change csv file", "menu-button", e -> stage.setScene(getSelectFileScene(stage)))
+        );
         instructions.setPadding(new Insets(30));
-        instructions.setAlignment(Pos.CENTER_LEFT);
-
-        Label howToUseLabel = new Label("How to use:");
-        howToUseLabel.getStyleClass().add("label");
-
-        Text instructionsText = new Text(
-                "Generate Invoices:\n" +
-                        "Generates invoices based on your provided CSV file\n" +
-                        "with the use of your active invoice items.\n\n" +
-                        "Invoice Items:\n" +
-                        "Add the items you wish to have active\n" +
-                        "for your invoice generation.");
-        instructionsText.getStyleClass().add("instructions-text");
-
-        Button changeFile = new Button("Change csv file");
-        changeFile.setMinWidth(150);
-        changeFile.getStyleClass().add("menu-button");
-        changeFile.setOnAction(e -> {
-            s.setScene(getSelectFileScene(s));
-            s.show();
-        });
-
-        instructions.getChildren().addAll(howToUseLabel, instructionsText, changeFile);
 
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(20));
         mainLayout.setLeft(buttonMenu);
         mainLayout.setRight(instructions);
-        mainLayout.getStyleClass().add("scene");
 
         Scene scene = new Scene(mainLayout, 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-
         return scene;
     }
 
-    public Scene getInvoicesScene(Stage s) {
-
-        Label titleLabel = new Label("Generate invoices");
-        titleLabel.getStyleClass().add("label");
-
-        Label invoicesLabel = new Label("Invoices");
-        invoicesLabel.getStyleClass().add("instructions-text"); // Smaller font style
-        invoicesLabel.setAlignment(Pos.TOP_LEFT); // Align to the left
-
-        // skapa tableview
-        TableView<List<String>> invoiceTable = new TableView<>();
-        invoiceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        invoiceTable.setMinWidth(400);
-        invoiceTable.setMaxHeight(150);
-
-        // definiera olika kolumner
-        TableColumn<List<String>, String> nameColumn = new TableColumn<>("Name");
-        nameColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(0)));
-
-        TableColumn<List<String>, String> itemsColumn = new TableColumn<>("Items");
-        itemsColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(1)));
-
-        TableColumn<List<String>, String> amountColumn = new TableColumn<>("Amount");
-        amountColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(2)));
-
-        // lägg till kolumner i tabell
-        invoiceTable.getColumns().addAll(nameColumn, itemsColumn, amountColumn);
-
+    private Scene getInvoicesScene(Stage stage) {
+        // Titel
+        Label titleLabel = createLabel("Generate Invoices", "label");
+    
+        // Tabell för fakturor
+        TableView<List<String>> invoiceTable = createInvoiceTable();
+    
+        // Populera tabellen med data från vald fil
         ArrayList<Invoice> invoices = populateTable(invoiceTable, selectedFile);
-
-        Button backButton = new Button("Back");
-        backButton.setMinWidth(100);
-        backButton.getStyleClass().add("menu-button");
-
-        backButton.setOnAction(e -> {
-            s.setScene(getMainLayout(s)); // Switch to main scene
-            s.show();
+    
+        // Skapa layout för knappar
+        Button backButton = createButton("Back", "menu-button", e -> stage.setScene(getMainLayout(stage)));
+        Button sendButton = createButton("Send to Fortnox", "menu-button", e -> {
+            if (invoices.isEmpty()) {
+                showAlert("No Data", "No invoices to send. Please check your file.");
+            } else {
+                sendToFortnox(invoices);
+            }
         });
-
-        Button sendButton = new Button("Send to Fortnox");
-        sendButton.setMinWidth(150);
-        sendButton.getStyleClass().add("menu-button");
-
-        sendButton.setOnAction(a -> {
-            getApi(invoices);
-        });
-
-        // Horisontell layout för knapparna
-        HBox buttonLayout = new HBox(20, backButton, sendButton);
-        buttonLayout.setAlignment(Pos.CENTER);
-
-        // Layout
-        VBox layout = new VBox(10, titleLabel, invoicesLabel, invoiceTable, buttonLayout);
-        layout.setAlignment(Pos.TOP_CENTER);
+    
+        HBox buttonLayout = createHBox(Pos.CENTER, 20, backButton, sendButton);
+    
+        // Skapa huvudlayout
+        VBox layout = createVBox(Pos.TOP_CENTER, 10,
+                titleLabel,
+                invoiceTable,
+                buttonLayout
+        );
         layout.setPadding(new Insets(30));
-        layout.getStyleClass().add("scene"); // Apply the background color from .scene
-
-        // Align "Invoices" label to the left
-        VBox.setMargin(invoicesLabel, new Insets(0, 0, 0, 20)); // Add left margin
-
-        // skapa o returnera scen
+    
+        // Returnera scenen med styling
         Scene scene = new Scene(layout, 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-
         return scene;
     }
 
-    public Scene getInvoiceItemsScene(Stage s) {
-        // Title Label
-        Label titleLabel = new Label("Invoice Items");
-        titleLabel.getStyleClass().add("label");
+    private Scene getAddItemScene(Stage stage) {
+        Label titleLabel = createLabel("Add New Invoice Item", "label");
 
-        // Items Label
-        Label itemsLabel = new Label("Items");
-        itemsLabel.getStyleClass().add("instructions-text");
+        TextField nameField = new TextField();
+        TextField priceField = new TextField();
+        TextField articleNumberField = new TextField();
 
-        // Table-like VBox for item checkboxes and "Edit" buttons
+        VBox inputFields = createVBox(Pos.TOP_CENTER, 10,
+                createLabel("Name:", "instructions-text"), nameField,
+                createLabel("Price:", "instructions-text"), priceField,
+                createLabel("Article Number:", "instructions-text"), articleNumberField
+        );
+
+        Button addButton = createButton("Add", "menu-button", e -> {
+            try {
+                String name = nameField.getText();
+                double price = Double.parseDouble(priceField.getText());
+                String articleNumber = articleNumberField.getText();
+
+                if (name.isEmpty() || articleNumber.isEmpty()) {
+                    throw new IllegalArgumentException("Name and Article Number cannot be empty.");
+                }
+
+                InvoiceItem newItem = new InvoiceItem(name, articleNumber, price);
+                lm.getInvoiceItems().add(newItem);
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Item Added");
+                alert.setHeaderText(null);
+                alert.setContentText("The item has been added successfully.");
+                alert.showAndWait();
+
+                stage.setScene(getInvoiceItemsScene(stage));
+            } catch (NumberFormatException ex) {
+                showAlert("Invalid Input", "Price must be a valid number.");
+            } catch (IllegalArgumentException ex) {
+                showAlert("Invalid Input", ex.getMessage());
+            }
+        });
+
+        Button backButton = createButton("Back", "menu-button", e -> stage.setScene(getInvoiceItemsScene(stage)));
+
+        HBox buttonLayout = createHBox(Pos.CENTER, 10, addButton, backButton);
+        VBox layout = createVBox(Pos.TOP_CENTER, 20, titleLabel, inputFields, buttonLayout);
+
+        Scene scene = new Scene(layout, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
+    private Scene getInvoiceItemsScene(Stage stage) {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
 
-        // Mock Data for Items
-        if (items.isEmpty()) {
-            items.add("Medlemskap");
-            items.add("Träningskort");
-            items.add("Kajakplats");
-            items.add("Utökat träningskort");
-
-        }
-
-        for (String item : items) {
-            HBox itemRow = new HBox(10);
-
-            // Checkbox
-            CheckBox checkBox = new CheckBox();
-            // checkBox.getStyleClass().add("menu-button"); // Optional: Add consistent
-            // style
-
-            // Item Name
-            Label itemName = new Label(item);
-            itemName.getStyleClass().add("instructions-text");
-
-            // Edit Button
-            Button editButton = new Button("Edit");
-            editButton.setOnAction(e -> s.setScene(EditItem(s, item)));
-            // editButton.getStyleClass().add("menu-button");
-            editButton.setMinWidth(80);
-
-            itemRow.getChildren().addAll(checkBox, itemName, editButton);
-            itemRow.setAlignment(Pos.CENTER_LEFT);
+        for (InvoiceItem item : lm.getInvoiceItems()) {
+            HBox itemRow = createHBox(Pos.CENTER_LEFT, 10,
+                    new CheckBox(),
+                    createLabel(item.key, "instructions-text"),
+                    createButton("Edit", "menu-button", e -> stage.setScene(getEditItemScene(stage, item))),
+                    createButton("Remove", "remove-button", e -> {
+                        lm.getInvoiceItems().remove(item);
+                        stage.setScene(getInvoiceItemsScene(stage));
+                    })
+            );
             itemList.getChildren().add(itemRow);
         }
 
-        // Tooltip Section
-        VBox tooltipBox = new VBox();
-        tooltipBox.setPadding(new Insets(5, 10, 0, 10));
-        tooltipBox.setAlignment(Pos.TOP_CENTER);
+        VBox tooltipBox = createTooltipBox("Tool tip",
+                "Remember to use the\nsame name for the item\nhere as it is declared in\nthe provided CSV file.");
 
-        Label tooltipTitle = new Label("Tool tip");
-        tooltipTitle.getStyleClass().add("label");
+        HBox buttonLayout = createHBox(Pos.CENTER, 20,
+                createButton("Back", "menu-button", e -> stage.setScene(getMainLayout(stage))),
+                createButton("Add new Item", "menu-button", e -> stage.setScene(getAddItemScene(stage)))
+        );
 
-        Text tooltipText = new Text(
-                "Remember to use the\n same name for the item\n here as it is declared in\n the provided CSV file.");
-
-        // tooltipText.setWrapText(true);
-        tooltipText.getStyleClass().add("instructions-text");
-
-        tooltipBox.getChildren().addAll(tooltipTitle, tooltipText);
-        tooltipBox.getStyleClass().add("tooltip-box");
-
-        // Buttons
-        Button backButton = new Button("Back");
-        backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(100);
-        backButton.setOnAction(e -> {
-            s.setScene(getMainLayout(s)); // Go back to the main menu
-        });
-
-        Button addItemButton = new Button("Add new Item");
-        addItemButton.getStyleClass().add("menu-button");
-        addItemButton.setMinWidth(150);
-        addItemButton.setOnAction(e -> {
-            s.setScene(AddNewItem(s));
-        });
-
-        // Button Layout
-        HBox buttonLayout = new HBox(20, backButton, addItemButton);
-        buttonLayout.setAlignment(Pos.CENTER);
-        buttonLayout.setPadding(new Insets(20));
-
-        // Combine everything into the main layout
         BorderPane mainLayout = new BorderPane();
         mainLayout.setPadding(new Insets(30));
-        mainLayout.setTop(titleLabel);
-        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
-        BorderPane.setMargin(titleLabel, new Insets(0, 0, 20, 20));
-
-        mainLayout.setLeft(new VBox(10, itemsLabel, itemList));
+        mainLayout.setLeft(new VBox(10, createLabel("Items", "instructions-text"), itemList));
         mainLayout.setRight(tooltipBox);
         mainLayout.setBottom(buttonLayout);
-        mainLayout.getStyleClass().add("scene");
 
-        // Scene
         Scene scene = new Scene(mainLayout, 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-
         return scene;
     }
 
-    public Scene AddNewItem(Stage s) {
+    private Scene getEditItemScene(Stage stage, InvoiceItem item) {
+        Label titleLabel = createLabel("Edit Invoice Item", "label");
 
-        BorderPane window = new BorderPane();
-        VBox grid = new VBox(10);
-        grid.setPadding(new Insets(500, 10, 5, 10));
-        HBox labels = new HBox(125);
-        HBox TextFields = new HBox(10);
-        HBox buttonMeny = new HBox(100);
+        TextField nameField = new TextField(item.key);
+        TextField priceField = new TextField(String.valueOf(item.price));
+        TextField articleNumberField = new TextField(item.articleNbr);
 
-        Label add = new Label("Add New Item");
-        add.getStyleClass().add("label");
-        add.setAlignment(Pos.CENTER);
+        VBox inputFields = createVBox(Pos.TOP_CENTER, 10,
+                createLabel("Name:", "instructions-text"), nameField,
+                createLabel("Price:", "instructions-text"), priceField,
+                createLabel("Article Number:", "instructions-text"), articleNumberField
+        );
 
-        Label nameToTextField = new Label("Name");
-        Label priceToTextField = new Label("Price");
-        Label articleNumberToTextField = new Label("Article Number");
+        Button saveButton = createButton("Save", "menu-button", e -> {
+            item.key = nameField.getText();
+            item.price = Double.parseDouble(priceField.getText());
+            item.articleNbr = articleNumberField.getText();
 
-        labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Item Updated");
+            alert.setHeaderText(null);
+            alert.setContentText("The item has been updated successfully.");
+            alert.showAndWait();
 
-        TextField name = new TextField();
-        TextField price = new TextField();
-        TextField articleNumber = new TextField();
-
-        TextFields.getChildren().addAll(name, price, articleNumber);
-
-        Button backButton = new Button("Back");
-        backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(150);
-        backButton.setOnAction(e -> {
-            s.setScene(getInvoiceItemsScene(s));
+            stage.setScene(getInvoiceItemsScene(stage));
         });
 
-        Button addItem = new Button("Add");
-        addItem.getStyleClass().add("menu-button");
-        addItem.setMinWidth(150);
-        addItem.setOnAction(e -> {
+        Button removeButton = createButton("Remove", "remove-button", e -> {
+            lm.getInvoiceItems().remove(item);
 
-            items.add(name.getCharacters().toString());
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Item Removed");
+            alert.setHeaderText(null);
+            alert.setContentText("The item has been removed.");
+            alert.showAndWait();
 
-            Alert added = new Alert(AlertType.INFORMATION);
-            added.setContentText("Item has been added");
-            added.showAndWait();
-            s.setScene(getInvoiceItemsScene(s));
+            stage.setScene(getInvoiceItemsScene(stage));
         });
 
-        buttonMeny.getChildren().addAll(backButton, addItem);
+        Button backButton = createButton("Back", "menu-button", e -> stage.setScene(getInvoiceItemsScene(stage)));
 
-        grid.getChildren().addAll(add, labels, TextFields, buttonMeny);
-        grid.getStyleClass().add("vbox-container");
+        HBox buttonLayout = createHBox(Pos.CENTER, 10, saveButton, removeButton, backButton);
+        VBox layout = createVBox(Pos.TOP_CENTER, 20, titleLabel, inputFields, buttonLayout);
 
-        window.setCenter(grid);
-
-        Scene scene = new Scene(window, 600, 400);
+        Scene scene = new Scene(layout, 600, 400);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
 
-    public Scene EditItem(Stage s, String string) { // som inparameter ska det skickas ett invoice item har sträng som
-                                                    // place holder så länge
-
-        BorderPane window = new BorderPane();
-        VBox grid = new VBox(10);
-        grid.setPadding(new Insets(500, 10, 5, 10));
-        HBox labels = new HBox(125);
-        HBox TextFields = new HBox(10);
-        HBox buttonMenu = new HBox(10);
-
-        Label edit = new Label("Edit Item");
-        edit.getStyleClass().add("label");
-        edit.setAlignment(Pos.CENTER);
-
-        Label nameToTextField = new Label("Name");
-        Label priceToTextField = new Label("Price");
-        Label articleNumberToTextField = new Label("Article Number");
-
-        labels.getChildren().addAll(nameToTextField, priceToTextField, articleNumberToTextField);
-
-        TextField name = new TextField(string);
-        TextField price = new TextField();
-        TextField articleNumber = new TextField();
-
-        TextFields.getChildren().addAll(name, price, articleNumber);
-
-        Button backButton = new Button("Back");
-        backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(100);
-        backButton.setMaxWidth(150);
-        backButton.setOnAction(e -> {
-            s.setScene(getInvoiceItemsScene(s));
-        });
-
-        Button addItem = new Button("Add the edited item");
-        addItem.getStyleClass().add("menu-button");
-        addItem.setMinWidth(100);
-        addItem.setMaxWidth(150);
-        addItem.setOnAction(e -> {
-            items.remove(string);
-            items.add(name.getCharacters().toString());
-
-            Alert edited = new Alert(AlertType.INFORMATION);
-            edited.setContentText("Item has been updated");
-            edited.showAndWait();
-            s.setScene(getInvoiceItemsScene(s));
-        });
-
-        // Lägg till Remove-knappen
-Button removeItemButton = new Button("Remove");
-removeItemButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
-removeItemButton.setMinWidth(100);
-removeItemButton.setMaxWidth(150);
-removeItemButton.setOnAction(e -> {
-    items.remove(string); // Ta bort objektet
-    Alert removed = new Alert(AlertType.INFORMATION);
-    removed.setContentText("Item has been removed");
-    removed.showAndWait();
-    s.setScene(getInvoiceItemsScene(s)); // Tillbaka till huvudlistan
-});
-
-// Lägg till alla knappar i HBox
-buttonMenu.getChildren().addAll(backButton, addItem, removeItemButton);
-buttonMenu.setAlignment(Pos.CENTER_LEFT);
-
-        grid.getChildren().addAll(edit, labels, TextFields, buttonMenu);
-        grid.getStyleClass().add("vbox-container");
-
-        window.setCenter(grid);
-
-        Scene scene = new Scene(window, 600, 400);
-        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-        return scene;
-    }
-
-    public Scene getDiscountScene(Stage s) {
-        // Title Label
-        Label titleLabel = new Label("Discounts");
-        titleLabel.getStyleClass().add("label");
-
-        // Items Label
-        Label itemsLabel = new Label("Items");
-        itemsLabel.getStyleClass().add("instructions-text");
-
-        // Table-like VBox for item checkboxes and "Edit" buttons
+    private Scene getDiscountScene(Stage stage) {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
 
-        // Mock Data for Items
-        if (discounts.isEmpty()) {
-            discounts.add("Medlemskap");
-            discounts.add("Träningskort");
-            discounts.add("Kajakplats");
-            discounts.add("Utökat träningskort");
-
+        for (InvoiceItem discount : lm.getInvoiceItems()) {
+            HBox discountRow = createHBox(Pos.CENTER_LEFT, 10,
+                    createLabel(discount.key, "instructions-text"),
+                    createButton("Edit", "menu-button", e -> stage.setScene(getEditDiscountScene(stage, discount))),
+                    createButton("Remove", "remove-button", e -> {
+                        lm.getDiscounts().remove(discount);
+                        stage.setScene(getDiscountScene(stage));
+                    })
+            );
+            itemList.getChildren().add(discountRow);
         }
 
-        for (String item : discounts) {
-            HBox itemRow = new HBox(10);
+        VBox tooltipBox = createTooltipBox("Tool tip",
+                "Manage discounts here. Use names consistent with your CSV file.");
 
-            // Item Name
-            Label itemName = new Label(item);
-            itemName.getStyleClass().add("instructions-text");
+        HBox buttonLayout = createHBox(Pos.CENTER, 20,
+                createButton("Back", "menu-button", e -> stage.setScene(getMainLayout(stage))),
+                createButton("Add new Discount", "menu-button", e -> stage.setScene(getAddDiscountScene(stage)))
+        );
 
-            // Edit Button
-            Button editButton = new Button("Edit");
-            editButton.setOnAction(e -> s.setScene(EditDiscountItem(s, item)));
-            // editButton.getStyleClass().add("menu-button");
-            editButton.setMinWidth(80);
+        BorderPane layout = new BorderPane();
+        layout.setPadding(new Insets(30));
+        layout.setLeft(new VBox(10, createLabel("Discounts", "instructions-text"), itemList));
+        layout.setRight(tooltipBox);
+        layout.setBottom(buttonLayout);
 
-            itemRow.getChildren().addAll(itemName, editButton);
-            itemRow.setAlignment(Pos.CENTER_LEFT);
-            itemList.getChildren().add(itemRow);
+        Scene scene = new Scene(layout, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
+    private Scene getEditDiscountScene(Stage stage, InvoiceItem discount) {
+        VBox layout = createVBox(Pos.TOP_CENTER, 10,
+                createLabel("Edit Discount", "label"),
+                createLabel("Name: " + discount.key, "instructions-text")
+        );
+
+        Button backButton = createButton("Back", "menu-button", e -> stage.setScene(getDiscountScene(stage)));
+
+        layout.getChildren().add(backButton);
+        Scene scene = new Scene(layout, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
+    private Scene getAddDiscountScene(Stage stage) {
+        VBox layout = createVBox(Pos.TOP_CENTER, 10,
+                createLabel("Add New Discount", "label")
+        );
+
+        Button backButton = createButton("Back", "menu-button", e -> stage.setScene(getDiscountScene(stage)));
+
+        layout.getChildren().add(backButton);
+        Scene scene = new Scene(layout, 600, 400);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        return scene;
+    }
+
+    private ArrayList<Invoice> populateTable(TableView<List<String>> invoiceTable, File selectedFile) {
+        if (selectedFile == null) {
+            showAlert("No File Selected", "Please select a CSV file before generating invoices.");
+            return new ArrayList<>();
         }
 
-        // Tooltip Section
-        VBox tooltipBox = new VBox();
-        tooltipBox.setPadding(new Insets(5, 10, 0, 10));
-        tooltipBox.setAlignment(Pos.TOP_CENTER);
+        Parser pars = new Parser(selectedFile);
+        ArrayList<Invoice> invoices;
+        try {
+            invoices = pars.toInvoices(lm.getExtraItems(), lm.getForAll(), lm.getDiscounts());
+        } catch (NullPointerException e) {
+            showAlert("Error", "Missing invoice item lists. Please ensure data is properly loaded.");
+            return new ArrayList<>();
+        }
 
-        Label tooltipTitle = new Label("Tool tip");
-        tooltipTitle.getStyleClass().add("label");
+        for (Invoice n : invoices) {
+            StringBuilder items = new StringBuilder();
+            double price = 0;
+            ArrayList<InvoiceItem> excluded = lm.getForAll();
 
-        Text tooltipText = new Text(
-                "Remember to use the\n same name for the item\n here as it is declared in\n the provided CSV file.");
+            for (InvoiceRow r : n.getInvoiceRows()) {
+                price += r.getPrice();
+                boolean isExcluded = false;
+                if (r.getPrice() > 0) {
+                    for (InvoiceItem i : excluded) {
+                        if (i.articleNbr.equals(r.getArticleNumber())) {
+                            isExcluded = true;
+                            break;
+                        }
+                    }
+                    if (!isExcluded) {
+                        items.append(r.getArticleName()).append(", ");
+                    }
+                }
+            }
 
-        // tooltipText.setWrapText(true);
-        tooltipText.getStyleClass().add("instructions-text");
+            if (items.length() > 0) {
+                items.setLength(items.length() - 2);
+            }
 
-        tooltipBox.getChildren().addAll(tooltipTitle, tooltipText);
-        tooltipBox.getStyleClass().add("tooltip-box");
-
-        // Buttons
-        Button backButton = new Button("Back");
-        backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(100);
-        backButton.setOnAction(e -> {
-            s.setScene(getMainLayout(s)); // Go back to the main menu
-        });
-
-        Button addItemButton = new Button("Add new Item");
-        addItemButton.getStyleClass().add("menu-button");
-        addItemButton.setMinWidth(150);
-        addItemButton.setOnAction(e -> {
-            s.setScene(AddNewDiscount(s));
-        });
-
-        // Button Layout
-        HBox buttonLayout = new HBox(20, backButton, addItemButton);
-        buttonLayout.setAlignment(Pos.CENTER);
-        buttonLayout.setPadding(new Insets(20));
-
-        // Combine everything into the main layout
-        BorderPane mainLayout = new BorderPane();
-        mainLayout.setPadding(new Insets(30));
-        mainLayout.setTop(titleLabel);
-        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
-        BorderPane.setMargin(titleLabel, new Insets(0, 0, 20, 20));
-
-        mainLayout.setLeft(new VBox(10, itemsLabel, itemList));
-        mainLayout.setRight(tooltipBox);
-        mainLayout.setBottom(buttonLayout);
-        mainLayout.getStyleClass().add("scene");
-
-        // Scene
-        Scene scene = new Scene(mainLayout, 600, 400);
-        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-
-        return scene;
+            List<String> row = new ArrayList<>();
+            row.add(n.getCustomerName());
+            row.add(items.toString());
+            row.add(String.format("%.2f", price));
+            invoiceTable.getItems().add(row);
+        }
+        return invoices;
     }
 
-    public Scene AddNewDiscount(Stage s) {
+    private void getApi(ArrayList<Invoice> invoices) {
+        if (invoices.isEmpty()) {
+            showAlert("No Invoices", "No invoices to send. Please generate invoices first.");
+            return;
+        }
 
-        BorderPane window = new BorderPane();
-        VBox grid = new VBox(10);
-        grid.setPadding(new Insets(500, 10, 5, 10));
-        HBox labels = new HBox(115);
-        HBox TextFields = new HBox(10);
-        HBox buttonMeny = new HBox(100);
-
-        Label add = new Label("Add New Item");
-        add.getStyleClass().add("label");
-        add.setAlignment(Pos.CENTER);
-
-        Label nameToTextField = new Label("Name");
-        Label AmountToTextField = new Label("Amount");
-        Label articleNumberToTextField = new Label("Article Number");
-
-        labels.getChildren().addAll(nameToTextField, AmountToTextField, articleNumberToTextField);
-
-        TextField name = new TextField();
-        TextField amount = new TextField();
-        TextField articleNumber = new TextField();
-
-        TextFields.getChildren().addAll(name, amount, articleNumber);
-
-        Button backButton = new Button("Back");
-        backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(150);
-        backButton.setOnAction(e -> {
-            s.setScene(getDiscountScene(s));
-        });
-
-        Button addItem = new Button("Add discount item");
-        addItem.getStyleClass().add("menu-button");
-        addItem.setMinWidth(150);
-        addItem.setOnAction(e -> {
-
-            discounts.add(name.getCharacters().toString());
-
-            Alert added = new Alert(AlertType.INFORMATION);
-            added.setContentText("Item has been added");
-            added.showAndWait();
-            s.setScene(getDiscountScene(s));
-        });
-
-        buttonMeny.getChildren().addAll(backButton, addItem);
-
-        grid.getChildren().addAll(add, labels, TextFields, buttonMeny);
-        grid.getStyleClass().add("vbox-container");
-
-        window.setCenter(grid);
-
-        Scene scene = new Scene(window, 600, 400);
-        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-        return scene;
+        Api api = new Api();
+        int sent = 0;
+        try {
+            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
+            if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
+                try {
+                    desktop.browse(new java.net.URI("https://apps.fortnox.se/fs/fs/login.php#"));
+                } catch (URISyntaxException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            sent = api.sendInvoiceList(invoices);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        showAlert("Success", "Invoices sent to Fortnox: " + sent);
     }
 
-    public Scene EditDiscountItem(Stage s, String string) { // som inparameter ska det skickas ett invoice item har
-                                                            // sträng som
-        // place holder så länge
 
-        BorderPane window = new BorderPane();
-        VBox grid = new VBox(10);
-        grid.setPadding(new Insets(500, 10, 5, 10));
-        HBox labels = new HBox(115);
-        HBox TextFields = new HBox(10);
-        HBox buttonMeny = new HBox(10);
-        buttonMeny.setAlignment(Pos.CENTER_LEFT);
-
-        Label edit = new Label("Edit discount");
-        edit.getStyleClass().add("label");
-        edit.setAlignment(Pos.CENTER);
-
-        Label nameToTextField = new Label("Name");
-        Label amountToTextField = new Label("Amount");
-        Label articleNumberToTextField = new Label("Article Number");
-
-        labels.getChildren().addAll(nameToTextField, amountToTextField, articleNumberToTextField);
-
-        TextField name = new TextField(string);
-        TextField amount = new TextField();
-        TextField articleNumber = new TextField();
-
-        TextFields.getChildren().addAll(name, amount, articleNumber);
-
-        Button backButton = new Button("Back");
-        backButton.getStyleClass().add("menu-button");
-        backButton.setMinWidth(100);
-        backButton.setMaxWidth(150);
-        backButton.setOnAction(e -> {
-            s.setScene(getDiscountScene(s));
-        });
-
-        Button addDiscountItem = new Button("Add the edited discount item");
-        addDiscountItem.getStyleClass().add("menu-button");
-        addDiscountItem.setMinWidth(100);
-        addDiscountItem.setMaxWidth(150);
-        addDiscountItem.setOnAction(e -> {
-            discounts.remove(string);
-            discounts.add(name.getCharacters().toString());
-
-            Alert edited = new Alert(AlertType.INFORMATION);
-            edited.setContentText("Item has been updated");
-            edited.showAndWait();
-            s.setScene(getDiscountScene(s));
-        });
-
-        // Lägg till Remove-knappen
-Button removeDiscountButton = new Button("Remove");
-removeDiscountButton.getStyleClass().add("remove-button"); // CSS klass för röd knapp
-removeDiscountButton.setMinWidth(100);
-removeDiscountButton.setMaxWidth(150);
-removeDiscountButton.setOnAction(e -> {
-    discounts.remove(string); // Ta bort objektet
-    Alert removed = new Alert(AlertType.INFORMATION);
-    removed.setContentText("Discount item has been removed");
-    removed.showAndWait();
-    s.setScene(getDiscountScene(s)); // Tillbaka till huvudlistan
-});
-
-// Lägg till alla knappar i HBox
-buttonMeny.getChildren().addAll(backButton, addDiscountItem, removeDiscountButton);
-
-
-
-        grid.getChildren().addAll(edit, labels, TextFields, buttonMeny);
-        grid.getStyleClass().add("vbox-container");
-
-        window.setCenter(grid);
-
-        Scene scene = new Scene(window, 600, 400);
-        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-        return scene;
+    private void sendToFortnox(ArrayList<Invoice> invoices) {
+        Api api = new Api();
+        try {
+            int sentCount = api.sendInvoiceList(invoices);
+            System.out.println("Invoices sent to Fortnox: " + sentCount);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
+    private Label createLabel(String text, String styleClass) {
+        Label label = new Label(text);
+        label.getStyleClass().add(styleClass);
+        return label;
+    }
+
+    private Button createButton(String text, String styleClass, javafx.event.EventHandler<javafx.event.ActionEvent> action) {
+        Button button = new Button(text);
+        button.getStyleClass().add(styleClass);
+        button.setOnAction(action);
+        return button;
+    }
+
+    private VBox createVBox(Pos alignment, int spacing, javafx.scene.Node... children) {
+        VBox box = new VBox(spacing, children);
+        box.setAlignment(alignment);
+        return box;
+    }
+
+    private HBox createHBox(Pos alignment, int spacing, javafx.scene.Node... children) {
+        HBox box = new HBox(spacing, children);
+        box.setAlignment(alignment);
+        return box;
+    }
+
+    private Text createText(String content) {
+        Text text = new Text(content);
+        text.getStyleClass().add("instructions-text");
+        return text;
+    }
+
+    private VBox createTooltipBox(String title, String content) {
+        return createVBox(Pos.TOP_CENTER, 10,
+                createLabel(title, "label"),
+                createText(content)
+        );
+    }
+
+    private Button createMenuButton(String text, Stage stage, java.util.function.Function<Stage, Scene> sceneFunction) {
+        Button button = new Button(text);
+        button.getStyleClass().add("menu-button");
+        button.setMinWidth(150);
+        button.setOnAction(e -> stage.setScene(sceneFunction.apply(stage)));
+        return button;
+    }
+
+    private TableView<List<String>> createInvoiceTable() {
+        TableView<List<String>> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    
+        TableColumn<List<String>, String> nameColumn = new TableColumn<>("Name");
+        nameColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(0)));
+    
+        TableColumn<List<String>, String> itemsColumn = new TableColumn<>("Items");
+        itemsColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(1)));
+    
+        TableColumn<List<String>, String> amountColumn = new TableColumn<>("Amount");
+        amountColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().get(2)));
+    
+        table.getColumns().addAll(nameColumn, itemsColumn, amountColumn);
+        return table;
+    }
+
+
+
+       private void showAlert(String title, String content) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 }
