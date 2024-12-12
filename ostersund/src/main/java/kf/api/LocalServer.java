@@ -12,6 +12,12 @@ import java.io.OutputStream;
 public class LocalServer {
     private String authCode = null;
     private Semaphore signal = new Semaphore(0);
+    private String authUrl = null;
+
+    public LocalServer(String authUrl) {
+        this.authUrl = authUrl;
+    }
+
 
     public void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -25,7 +31,7 @@ public class LocalServer {
         java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
                 if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
                     try {
-                        desktop.browse(new java.net.URI("https://apps.fortnox.se/oauth-v1/login?next=%2Foauth-v1%2Fauth%3Fclient_id%3DZewMOWGGBanJ%26scope%3Dinvoice%26state%3Dsomestate123%26access_type%3Doffline%26response_type%3Dcode%26account_type%3Dservice"));
+                        desktop.browse(new java.net.URI(authUrl));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
