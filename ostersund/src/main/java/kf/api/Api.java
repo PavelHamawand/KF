@@ -51,7 +51,7 @@ public class Api {
         }
 
         // Temorary Server for authentication
-        LocalServer server = new LocalServer();
+        LocalServer server = new LocalServer(authURL);
         try {
             server.startServer();
             
