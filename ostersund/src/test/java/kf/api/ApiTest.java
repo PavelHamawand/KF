@@ -16,7 +16,7 @@ import kf.ListManger;
 import kf.Parser;
 
 public class ApiTest {
-    File file = new File("src/test/java/kf/api/env.txt");
+    File file = new File("src/main/java/kf/api/env.txt");
     private Api api = new Api(file);
     private ListManger listManger = new ListManger();
     private Parser parser = new Parser(new File("src/main/java/kf/Exemple.csv"));
