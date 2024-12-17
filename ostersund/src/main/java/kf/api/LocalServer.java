@@ -9,6 +9,14 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.OutputStream;
 
+/**
+ * A local HTTP server implementation for handling OAuth 2.0 authorization code flow.
+ * This server creates a temporary endpoint to receive the authorization callback
+ * and extract the authorization code.
+ * 
+ * @author Berni
+ * @version 1.0
+ */
 public class LocalServer {
     HttpServer server = null;
     private String authCode = null;
@@ -20,6 +28,12 @@ public class LocalServer {
     }
 
 
+    /**
+     * Initializes and starts a local HTTP server on port 8080.
+     * Creates a context for handling OAuth callback requests at "/callback" endpoint.
+     * 
+     * @throws IOException if an error occurs while creating or starting the server
+     */
     public void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/callback", new AuthHandler());
@@ -28,6 +42,11 @@ public class LocalServer {
         System.out.println("Server started on http://localhost:8080/callback");
     }
 
+    /**
+     * Opens the default browser to the authorization URL and waits for the authorization code.
+     * 
+     * @return the authorization code received from the OAuth server
+     */
     public String getAuthCode() {
         java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
                 if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
@@ -46,6 +65,9 @@ public class LocalServer {
         return authCode;
     }
 
+    /**
+     * Stops the local HTTP server.
+     */
     public void close() {
         if (server != null) {
             server.stop(0); // 0 means stop immediately
@@ -53,6 +75,10 @@ public class LocalServer {
         }
     }
 
+    /**
+     * A handler for processing HTTP requests to the "/callback" endpoint.
+     * Extracts the authorization code from the query parameters and sends a response to the browser.
+     */
     private class AuthHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {

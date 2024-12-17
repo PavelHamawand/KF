@@ -16,6 +16,32 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
+/**
+ * The Api class handles authentication and communication with the Fortnox API.
+ * It provides functionality for sending invoices and managing authentication tokens.
+ * 
+ * This class requires an env.txt file containing:
+ * - Client ID (line 1)
+ * - Client Secret (line 2) 
+ * - Auth URL (line 3)
+ * - Redirect URL (line 4)
+ *
+ * The class manages:
+ * - OAuth 2.0 authentication flow
+ * - Access token retrieval and management
+ * - Invoice creation and cancellation
+ * - Batch processing of invoices with rate limiting
+ *
+ * Important notes:
+ * - The class automatically starts a temporary local server for authentication
+ * - Rate limiting is implemented (25 requests per 5 seconds) for batch operations
+ * - Failed batch operations will automatically cancel all successfully created invoices
+ *
+ * @author Your Name
+ * @version 1.0
+ * @see Invoice
+ * @see LocalServer
+ */
 public class Api {
     private String clientId;
     private String clientSecret;
@@ -26,17 +52,43 @@ public class Api {
     private HttpClient client;
     private LocalServer server;
 
+
+       /**
+     * Constructs an Api instance with the defualt configuration file.
+     * 
+     * 
+     */
+    public Api() {
+        File file = new File("ostersund/src/main/java/kf/api/env.txt");
+        setup(file);
+    }
+
+    /**
+     * Constructs an Api instance with a specified configuration file.
+     * 
+     * @param file The environment configuration file to be used for setting up the API
+     *             This allows for different configurations during testing.
+     */
     public Api(File file) {
         // Constructor able to change the env file for testing purposes 
         setup(file);
 
     }
 
-    public Api() {
-        File file = new File("ostersund/src/main/java/kf/api/env.txt");
-        setup(file);
-    }
-
+    /**
+     * Sets up the API configuration by reading credentials from a file and initializing authentication.
+     * 
+     * This method performs the following steps:
+     * 1. Reads client credentials and URLs from the specified file
+     * 2. Starts a temporary local server for authentication
+     * 3. Initializes HTTP client
+     * 4. Gets authentication code through local server
+     * 5. Retrieves access token
+     * 
+     * @param file The file containing API credentials and configuration (expected format: clientId, clientSecret, authURL, redirectURL on separate lines)
+     * @throws FileNotFoundException if the specified configuration file is not found
+     * @throws IOException if the local server fails to start
+     */
     private void setup(File file) {
         try {
             Scanner scanner = new Scanner(file);
@@ -68,13 +120,23 @@ public class Api {
         this.getAccessToken();
     }
 
+    /**
+     * Prints environment-related information to the console.
+     * This method displays the client ID, client secret, and authentication URL
+     * for debugging or verification purposes.
+     */
     private void enviorment() {
         System.out.println("Client ID: " + clientId);
         System.out.println("Client Secret: " + clientSecret);
         System.out.println("Please visit Auth URL: " + authURL);
     }
 
-    // Method to get access token
+    /**
+     * Retrieves the access token from the Fortnox API using the client credentials and authentication code.
+     * 
+     * This method sends a POST request to the Fortnox API with the client credentials and authentication code.
+     * The response contains the access token and refresh token, which are extracted and stored for future requests.
+     */
     private void getAccessToken() {
         String credentials = Base64.getEncoder()
                 .encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
@@ -116,8 +178,17 @@ public class Api {
 
     }
 
-    // metod för att skicka en faktura returnerar true för genomförd och false för
-    // misslyckad
+    /**
+     * Sends an invoice to the Fortnox API using the provided Invoice object.
+     * 
+     * This method serializes the Invoice object to JSON and sends a POST request to the Fortnox API.
+     * The response is checked for success and the method returns a boolean indicating the result.
+     * 
+     * @param invoice The Invoice object to be sent to the Fortnox API
+     * @return true if the invoice was successfully sent, false otherwise
+     * @throws IOException if the request fails
+     * @throws InterruptedException if the request is interrupted
+     */
     public boolean sendInvoice(Invoice invoice) throws IOException, InterruptedException {
         if (accessToken == null) {
             System.out.println("Access token is missing. Please authenticate first.");
@@ -151,8 +222,17 @@ public class Api {
             throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode);
     }
 
-    // Skickar alla fakturor i en lista och returnerar antalet fakturor som
-    // skickades
+    /**
+     * Sends a list of invoices to the Fortnox API using the provided List of Invoice objects.
+     * 
+     * This method serializes each Invoice object to JSON and sends a POST request to the Fortnox API.
+     * The response is checked for success and the method returns the number of invoices successfully sent.
+     * 
+     * @param invoices The List of Invoice objects to be sent to the Fortnox API
+     * @return the number of invoices successfully sent
+     * @throws IOException if the request fails
+     * @throws InterruptedException if the request is interrupted
+     */
     public int sendInvoiceList(List<Invoice> invoices) throws IOException, InterruptedException {
         int sentInvoices = 0;
         int rateLimit = 25;
@@ -214,6 +294,15 @@ public class Api {
         return sentInvoices;
     }
 
+    /**
+     * Sends a test invoice to the Fortnox API using the provided Invoice object.
+     * 
+     * This method serializes the Invoice object to JSON and sends a POST request to the Fortnox API.
+     * The response is checked for success and the method returns the HttpResponse object.
+     * 
+     * @param invoice The Invoice object to be sent to the Fortnox API
+     * @return the HttpResponse object containing the response from the Fortnox API
+     */
     public HttpResponse<String> sendInvoiceTest(Invoice invoice) {
         if (accessToken == null) {
             System.out.println("Access token is missing. Please authenticate first.");
@@ -257,6 +346,17 @@ public class Api {
         return response;
     }
 
+    /**
+     * Removes an invoice from the Fortnox API using the provided invoice number.
+     * 
+     * This method sends a PUT request to the Fortnox API to cancel the invoice with the specified number.
+     * The response is checked for success and the method returns a boolean indicating the result.
+     * 
+     * @param invoiceNumber The invoice number of the invoice to be removed
+     * @return true if the invoice was successfully removed, false otherwise
+     * @throws IOException if the request fails
+     * @throws InterruptedException if the request is interrupted
+     */
     public boolean removeInvoice(String invoiceNumber) throws IOException, InterruptedException {
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -286,7 +386,9 @@ public class Api {
         return documentNumber;
     }
 
-    // Method to close the underlying  LocalServer
+    /**
+     * Closes the local server used for authentication.
+     */
     public void close() {
         server.close();
     }

@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"kf.api","l":"Api"},{"p":"kf","l":"App"},{"p":"kf.api","l":"Invoice"},{"p":"kf","l":"InvoiceItem"},{"p":"kf.api","l":"InvoiceRow"},{"p":"kf","l":"ListManager"},{"p":"kf.api","l":"LocalServer"},{"p":"kf","l":"Main"},{"p":"kf","l":"Parser"}];updateSearchResults();

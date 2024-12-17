@@ -2,6 +2,13 @@ package kf;
 
 import java.io.Serializable;
 
+/**
+ * Represents an invoice item with key, article number, price, and availability status.
+ * This class implements Serializable for object persistence.
+ * 
+ * @author KForesund
+ * @version 1.0
+ */
 public class InvoiceItem implements Serializable { 
     private static final long serialVersionUID = 1L;
 

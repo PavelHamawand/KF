@@ -11,16 +11,45 @@ import java.util.Scanner;
 import kf.api.Invoice;
 import kf.api.InvoiceRow;
 
+/**
+ * A CSV file parser specifically designed for processing invoice-related data.
+ * This class reads and validates CSV files containing customer and invoice information,
+ * and converts the data into Invoice objects.
+ * 
+ * The CSV file must contain at least the following columns:
+ * - "Rabatt" (Discount)
+ * - "Grupp/Lag/Arbetsrum/Familj" (Group/Team/Workspace/Family)
+ * - "Förnamn" (First name)
+ * - "Efternamn" (Last name)
+ * - "IdrottsID" (Sports ID)
+ * 
+ * The parser handles quoted CSV fields and validates the structure of the CSV file.
+ */
 public class Parser {
     private final ArrayList<String[]> data = new ArrayList<>();
     private final File file;
     private final HashMap<String, Integer> header = new HashMap<>();
 
+    /**
+     * Constructs a Parser object and initiates parsing of the specified file.
+     * 
+     * @param file The File object to be parsed
+     * @throws IllegalArgumentException if the file is null or does not exist
+     */
     public Parser(File file) {
         this.file = file;
         parse();
     }
 
+    /**
+     * Parses the CSV file and initializes the data structure.
+     * Reads the file line by line, stores the data in a list,
+     * creates a header mapping, and validates the CSV structure.
+     * The first line is treated as the header row.
+     *
+     * @throws IllegalArgumentException if the file is not found,
+     *         if the CSV file is empty, or if the CSV validation fails
+     */
     private void parse() throws IllegalArgumentException {
         try (Scanner scan = new Scanner(file)) {
             while (scan.hasNextLine()) {
@@ -42,6 +71,12 @@ public class Parser {
         validateCSV();
     }
 
+    /**
+     * Validates the structure and content of the CSV data.
+     * 
+     * @throws IllegalArgumentException if required columns 'Rabatt' or 'Grupp/Lag/Arbetsrum/Familj' are missing
+     * @throws IllegalArgumentException if any row has a different number of columns than the first row
+     */
     private void validateCSV() {
         if (!header.containsKey("Rabatt")) {
             throw new IllegalArgumentException("Kolumnen 'Rabatt' saknas i CSV-filen.");
@@ -58,6 +93,13 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses a single line of CSV data and returns an array of fields.
+     * Handles quoted fields and commas within quotes.
+     * 
+     * @param line The line of CSV data to be parsed
+     * @return An array of fields extracted from the line
+     */
     private String[] parseLine(String line) {
         ArrayList<String> fields = new ArrayList<>();
         StringBuilder currentField = new StringBuilder();
@@ -77,6 +119,15 @@ public class Parser {
         return fields.toArray(new String[0]);
     }
 
+    /**
+     * Retrieves the value of a specific column in the CSV data.
+     * 
+     * @param index The index of the row in the CSV data
+     * @param columnName The name of the column to retrieve
+     * @return The value of the specified column in the specified row
+     * @throws IllegalArgumentException if the column name is not found in the header
+     *         or if the column value is missing in the CSV data
+     */
     private String getColumnValue(int index, String columnName) {
         Integer colIndex = header.get(columnName);
         if (colIndex == null || index >= data.size() || colIndex >= data.get(index).length) {
@@ -86,6 +137,14 @@ public class Parser {
         return data.get(index)[colIndex];
     }
 
+    /**
+     * Converts the parsed CSV data into a list of Invoice objects.
+     * 
+     * @param extraItems A list of additional invoice items to be added to the invoices
+     * @param forAllList A list of invoice items that should be included in all invoices
+     * @param discountList A list of invoice items that represent discounts
+     * @return A list of Invoice objects containing the parsed data
+     */
     public ArrayList<Invoice> toInvoices(ArrayList<InvoiceItem> extraItems,
                                          ArrayList<InvoiceItem> forAllList,
                                          ArrayList<InvoiceItem> discountList) {
@@ -124,6 +183,12 @@ public class Parser {
         return invoices;
     }
 
+    /**
+     * Creates a list of InvoiceRow objects for items that should be included in all invoices.
+     * 
+     * @param forAllList A list of invoice items that should be included in all invoices
+     * @return A list of InvoiceRow objects containing the items that should be included in all invoices
+     */
     private List<InvoiceRow> createRowsForAll(ArrayList<InvoiceItem> forAllList) {
         List<InvoiceRow> rows = new ArrayList<>();
         if (forAllList == null) {
@@ -142,6 +207,13 @@ public class Parser {
         return rows;
     }
 
+    /**
+     * Converts an array of item keys into a list of InvoiceRow objects.
+     * 
+     * @param items An array of item keys to be converted
+     * @param itemFilter A list of invoice items to filter the items against
+     * @return A list of InvoiceRow objects containing the converted items
+     */
     private ArrayList<InvoiceRow> toRows(String[] items, ArrayList<InvoiceItem> itemFilter) {
         ArrayList<InvoiceRow> rows = new ArrayList<>();
         for (String item : items) {
@@ -159,6 +231,14 @@ public class Parser {
         return rows;
     }
 
+    /**
+     * Creates an InvoiceRow object for a discount item.
+     * 
+     * @param discount The discount item key
+     * @param discountList A list of invoice items that represent discounts
+     * @return An InvoiceRow object representing the discount item
+     * @throws IllegalArgumentException if the discount item is not found in the discount list
+     */
     private InvoiceRow createDiscountRow(String discount, ArrayList<InvoiceItem> discountList) {
         for (InvoiceItem item : discountList) {
             if (discount.contains(item.key)) {
