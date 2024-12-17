@@ -92,6 +92,31 @@ public class ApiTest {
 
     }
 
+    @Test
+    @DisplayName("Test the removeInvoice method")
+    void testRemoveInvoice(){
+        int rateLimit = 25;
+        int counter = 0;
+        for (int i = 108; i < 120; i++ ){
+            counter++;
+            if (counter == rateLimit){
+                try {
+                    Thread.sleep(5000);
+                    counter = 0;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                assertTrue(api.removeInvoice(String.valueOf(i)));
+                System.out.println("Invoice removed");
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+
     private String getDocumentNumber(HttpResponse<String> response) {
         String responseBody = response.body();
         JSONObject jsonResponse = new JSONObject(responseBody);

@@ -28,6 +28,8 @@ import java.util.function.Consumer;
 public class App extends Application {
     private File selectedFile;
     private ListManger lm = null;
+    private final int width = 800;
+    private final int heigth = 600;
 
     @Override
     public void start(Stage s) {
@@ -79,7 +81,7 @@ public class App extends Application {
         VBox layout = createVBox(Pos.CENTER, 10, titleLabel, instructionLabel, selectFileButton);
         layout.getStyleClass().add("vbox-container");
 
-        Scene scene = new Scene(new StackPane(layout), 600, 400);
+        Scene scene = new Scene(new StackPane(layout), width, heigth);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
@@ -111,7 +113,7 @@ public class App extends Application {
         mainLayout.setLeft(buttonMenu);
         mainLayout.setRight(instructions);
 
-        Scene scene = new Scene(mainLayout, 600, 400);
+        Scene scene = new Scene(mainLayout, width, heigth);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
@@ -147,7 +149,7 @@ public class App extends Application {
         layout.setPadding(new Insets(30));
     
         // Returnera scenen med styling
-        Scene scene = new Scene(layout, 600, 400);
+        Scene scene = new Scene(layout, width, heigth);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
@@ -165,11 +167,11 @@ public class App extends Application {
 
         for (InvoiceItem item : lm.getInvoiceItems()) {
             HBox itemRow = createHBox(Pos.CENTER_LEFT, 10,
-                    new CheckBox(),
+                    createCheckBox(item),
                     createLabel(item.key, "instructions-text"),
                     createButton("Edit", "menu-button", e -> stage.setScene(getEditItemScene(stage, item))),
                     createButton("Remove", "remove-button", e -> {
-                        lm.getInvoiceItems().remove(item);
+                        lm.remove(item);
                         stage.setScene(getInvoiceItemsScene(stage));
                     })
                 
@@ -197,7 +199,7 @@ public class App extends Application {
         mainLayout.setRight(tooltipBox);
         mainLayout.setBottom(buttonLayout);
 
-        Scene scene = new Scene(mainLayout, 600, 400);
+        Scene scene = new Scene(mainLayout, width, heigth);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
@@ -208,6 +210,7 @@ public class App extends Application {
             () -> stage.setScene(getInvoiceItemsScene(stage))
         );
     }
+    
     private Scene getDiscountScene(Stage stage) {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
@@ -241,7 +244,7 @@ public class App extends Application {
         layout.setRight(tooltipBox);
         layout.setBottom(buttonLayout);
 
-        Scene scene = new Scene(layout, 600, 400);
+        Scene scene = new Scene(layout, width, heigth);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         return scene;
     }
@@ -309,30 +312,7 @@ public class App extends Application {
         return invoices;
     }
 
-    private void getApi(ArrayList<Invoice> invoices) {
-        if (invoices.isEmpty()) {
-            showAlert("No Invoices", "No invoices to send. Please generate invoices first.");
-            return;
-        }
-
-        Api api = new Api();
-        int sent = 0;
-        try {
-            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
-            if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
-                try {
-                    desktop.browse(new java.net.URI("https://apps.fortnox.se/fs/fs/login.php#"));
-                } catch (URISyntaxException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            sent = api.sendInvoiceList(invoices);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        showAlert("Success", "Invoices sent to Fortnox: " + sent);
-    }
+    // Method removed as it was never used locally
 
     private void sendToFortnox(ArrayList<Invoice> invoices) {
         Api api = new Api();
@@ -406,10 +386,17 @@ public class App extends Application {
     window.setCenter(layout);
 
     // Skapa scenen
-    Scene scene = new Scene(window, 600, 400);
+    Scene scene = new Scene(window, width, heigth);
     scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
     return scene;
 }
+    
+    private CheckBox createCheckBox(InvoiceItem item) {
+        CheckBox checkBox = new CheckBox();
+        
+        checkBox.setOnAction(e -> lm.toggleForAll(item));
+        return checkBox;
+    }    
 
     private Label createLabel(String text, String styleClass) {
         Label label = new Label(text);

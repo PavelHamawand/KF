@@ -17,28 +17,28 @@ public class ListManger implements Serializable {
         this.forAll = new ArrayList<>();
         this.extraItems = new ArrayList<>();
         sortList();
-        
+
     }
-    
+
     private void sortList() {
         for (InvoiceItem item : invoiceItems) {
-            
+
             if (item.forAll) {
-                
-                if(forAll.contains(item)) {
+
+                if (forAll.contains(item)) {
                     continue;
-                }
-                else this.forAll.add(item);
-            } 
+                } else
+                    this.forAll.add(item);
+            }
 
             else if (extraItems.contains(item)) {
                 continue;
-            } 
-            else {
-                    extraItems.add(item);
+            } else {
+                extraItems.add(item);
             }
         }
     }
+
     private ArrayList<InvoiceItem> initInvoiceItems() {
         ArrayList<InvoiceItem> invoiceItems = new ArrayList<InvoiceItem>();
         invoiceItems.add(new InvoiceItem("Medlemsavgift", "IO-AVG-2743", 105.0));
@@ -73,6 +73,9 @@ public class ListManger implements Serializable {
     }
 
     public void editDiscount(InvoiceItem item, String name, String articleNbr, double price) {
+        if (price > 0) {
+            throw new IllegalArgumentException("Price must be negative");
+        }
         discounts.remove(item);
         InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
         discounts.add(newItem);
@@ -85,9 +88,13 @@ public class ListManger implements Serializable {
             throw new IllegalArgumentException("Article number already exists");
         } else
             invoiceItems.add(newItem);
+            sortList();
     }
 
     public void addDiscount(String name, String articleNbr, double price) throws IllegalArgumentException {
+        if (price > 0) {
+            throw new IllegalArgumentException("Price must be negative");
+        }
         InvoiceItem newItem = new InvoiceItem(name, articleNbr, price);
         if (discounts.contains(newItem)) {
             throw new IllegalArgumentException("Article number already exists");
@@ -97,7 +104,7 @@ public class ListManger implements Serializable {
 
     public void toggleForAll(InvoiceItem item) {
         item.toggleForAll();
-        if(!item.forAll) {
+        if (!item.forAll) {
             forAll.remove(item);
             extraItems.add(item);
         } else {
@@ -107,7 +114,8 @@ public class ListManger implements Serializable {
     }
 
     public void remove(InvoiceItem item) {
-        // Ta bort item från alla listor, snabbare och säkrare än att söka efter referensen i alla listor
+        // Ta bort item från alla listor, snabbare och säkrare än att söka efter
+        // referensen i alla listor
         invoiceItems.remove(item);
         extraItems.remove(item);
         forAll.remove(item);

@@ -22,6 +22,7 @@ public class InvoiceItem implements Serializable {
         this.price = newPrice;
     }
 
+    // Try not to use this outside of ListManger
     public void toggleForAll() {
         this.forAll = !this.forAll;
     }
