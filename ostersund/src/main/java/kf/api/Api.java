@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import com.google.gson.Gson;
@@ -52,7 +53,7 @@ public class Api {
         }
 
         // Temorary Server for authentication
-        LocalServer server = new LocalServer(authURL);
+        this.server = new LocalServer(authURL);
         try {
             server.startServer();
             
@@ -154,6 +155,11 @@ public class Api {
     // skickades
     public int sendInvoiceList(List<Invoice> invoices) throws IOException, InterruptedException {
         int sentInvoices = 0;
+        int rateLimit = 25;
+        int counter = 0;
+        HashSet<String> documentNumbers = new HashSet<String>();
+
+
         if (accessToken == null) {
             System.out.println("Access token is missing. Please authenticate first.");
             return -1;
@@ -163,12 +169,10 @@ public class Api {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject invoiceJsonObject = new JsonObject();
 
-        int rateLimit = 25;
-        int counter = 0;
+       
 
         for (Invoice invoice : invoices) {
             // Create a JsonObject and add the Invoice object under the "Invoice" key
-            // Eventuellt lägg till wait här för att inte orsaka för många requests
             invoiceJsonObject.add("Invoice", gson.toJsonTree(invoice));
 
             // Convert the JsonObject to a String
@@ -182,19 +186,30 @@ public class Api {
                     .POST(HttpRequest.BodyPublishers.ofString(invoiceJson))
                     .build();
 
-            counter++;
+            // Rate limit handling
+            
             if (counter == rateLimit) {
                 Thread.sleep(5000);
                 counter = 0;
             }
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int responseCode = response.statusCode();
+
             if (responseCode == 201) {
+                
+                counter++;
                 sentInvoices++;
-            } else
-                throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode + "\n" + response.body()
-                       + "\nFailed to send invoices. Only " + sentInvoices + " out of " + invoices.size()
-                        + " invoices were sent.");
+                documentNumbers.add(getDocumentNumber(response));
+                
+            } else {
+                for(String number : documentNumbers){
+                    removeInvoice(number);
+                }
+               throw new IOException("Failed to create invoice. HTTP Response Code: " + responseCode + "\n" + response.body()
+                      + "\nFailed to send invoices. Only " + sentInvoices + " out of " + invoices.size()
+                       + " invoices were sent." + "\n All invoices have been removed" );
+            }
+                 
         }
         return sentInvoices;
     }
@@ -261,6 +276,17 @@ public class Api {
         }
     }
 
+    private String getDocumentNumber(HttpResponse<String> response) {
+        String responseBody = response.body();
+        JsonObject jsonResponse = new Gson().fromJson(responseBody, JsonObject.class);
+
+        // Extract the DocumentNumber
+        String documentNumber = jsonResponse.getAsJsonObject("Invoice").get("DocumentNumber").getAsString();
+        System.out.println("DocumentNumber: " + documentNumber);
+        return documentNumber;
+    }
+
+    // Method to close the underlying  LocalServer
     public void close() {
         server.close();
     }

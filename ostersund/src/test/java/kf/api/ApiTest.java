@@ -6,9 +6,12 @@ import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import org.json.JSONObject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,10 +19,10 @@ import kf.ListManger;
 import kf.Parser;
 
 public class ApiTest {
-    File file = new File("src/main/java/kf/api/env.txt");
+    File file = new File("src/test/java/kf/api/env.txt");
     private Api api = new Api(file);
     private ListManger listManger = new ListManger();
-    private Parser parser = new Parser(new File("src/main/java/kf/Exemple.csv"));
+    private Parser parser = new Parser(new File("src/test/java/kf/api/Exemple.csv"));
 
     @Test
     @DisplayName("Test the sendInvoice method")
@@ -115,10 +118,10 @@ public class ApiTest {
 
     private String getDocumentNumber(HttpResponse<String> response) {
         String responseBody = response.body();
-        JSONObject jsonResponse = new JSONObject(responseBody);
+        JsonObject jsonResponse = new Gson().fromJson(responseBody, JsonObject.class);
 
         // Extract the DocumentNumber
-        String documentNumber = jsonResponse.getJSONObject("Invoice").getString("DocumentNumber");
+        String documentNumber = jsonResponse.getAsJsonObject("Invoice").get("DocumentNumber").getAsString();
         System.out.println("DocumentNumber: " + documentNumber);
         return documentNumber;
     }

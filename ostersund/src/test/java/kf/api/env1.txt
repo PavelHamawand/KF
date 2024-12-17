@@ -1,0 +1,4 @@
+ZewMOWGGBanJ
+Dd3Ny6Q5Ce
+https://apps.fortnox.se/oauth-v1/login?next=%2Foauth-v1%2Fauth%3Fclient_id%3DZewMOWGGBanJ%26scope%3Dinvoice%26state%3Dsomestate123%26access_type%3Doffline%26response_type%3Dcode%26account_type%3Dservice
+http://localhost:8080/callback
