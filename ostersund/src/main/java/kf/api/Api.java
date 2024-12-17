@@ -23,6 +23,7 @@ public class Api {
     private String accessToken;
     private String redirectURL;
     private HttpClient client;
+    private LocalServer server;
 
     public Api(File file) {
         // Constructor able to change the env file for testing purposes 
@@ -259,4 +260,10 @@ public class Api {
             return false;
         }
     }
-}
+
+    public void close() {
+        server.close();
+    }
+
+    
+    }

@@ -25,40 +25,35 @@ public class ApiTest {
     @DisplayName("Test the sendInvoice method")
     void testSendInvoice() {
 
-        // Create the Invoice object
         Invoice invoice = new Invoice();
         invoice.setCustomerNumber("IID02234160");
         invoice.setInvoiceDate(LocalDate.now().toString());
 
-        // Create InvoiceRow
         InvoiceRow invoiceRow = new InvoiceRow();
         invoiceRow.setArticleNumber("IO-AVG-2743");
         invoiceRow.setDeliveredQuantity(1);
 
-        // Add InvoiceRow to a list
+    
         List<InvoiceRow> invoiceRows = new ArrayList<>();
         invoiceRows.add(invoiceRow);
 
-        // Set InvoiceRows to Invoice
+    
         invoice.addInvoiceRows(invoiceRows);
 
-        // Send the invoice
+     
         HttpResponse<String> response = api.sendInvoiceTest(invoice);
         assertEquals(201, response.statusCode());
         
-
-        // Parse the JSON response
         String documentNumber = getDocumentNumber(response);
-
-        // Remove the invoice
         try {
             assertTrue(api.removeInvoice(documentNumber));
             System.out.println("Invoice removed");
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-
-        System.out.println("Test completed");
+        
+        //Clean up 
+        api.close();
     }
 
     
@@ -75,7 +70,6 @@ public class ApiTest {
             for (Invoice invoice : invoices) {
                 HttpResponse<String> response = api.sendInvoiceTest(invoice);
                 assertEquals(201, response.statusCode());
-                response.body();
                 documentNumber = getDocumentNumber(response);
                 documentNumbers.add(documentNumber);
             }
@@ -90,6 +84,8 @@ public class ApiTest {
             }
         }
 
+        api.close();
+        System.out.println("Test completed");
     }
 
     @Test
@@ -126,5 +122,6 @@ public class ApiTest {
         System.out.println("DocumentNumber: " + documentNumber);
         return documentNumber;
     }
+
 
 }

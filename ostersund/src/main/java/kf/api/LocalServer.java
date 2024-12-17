@@ -10,6 +10,7 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.OutputStream;
 
 public class LocalServer {
+    HttpServer server = null;
     private String authCode = null;
     private Semaphore signal = new Semaphore(0);
     private String authUrl = null;
@@ -20,7 +21,7 @@ public class LocalServer {
 
 
     public void startServer() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/callback", new AuthHandler());
         server.setExecutor(null);
         server.start();
@@ -43,6 +44,13 @@ public class LocalServer {
             e.printStackTrace();
         }
         return authCode;
+    }
+
+    public void close() {
+        if (server != null) {
+            server.stop(0); // 0 means stop immediately
+            System.out.println("Server stopped");
+        }
     }
 
     private class AuthHandler implements HttpHandler {
