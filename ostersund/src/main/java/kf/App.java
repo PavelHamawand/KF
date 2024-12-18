@@ -295,7 +295,7 @@ public class App extends Application {
     private Scene getAddItemScene(Stage stage) {
         return createEditOrAddScene(stage, "Add New Invoice Item", null, false,
                 newItem -> lm.addInvoiceItem(newItem.key, newItem.articleNbr, newItem.price),
-                () -> stage.setScene(getInvoiceItemsScene(stage)));
+                () -> stage.setScene(getInvoiceItemsScene(stage)), true);
     }
 
     /**
@@ -312,7 +312,7 @@ public class App extends Application {
     private Scene getEditItemScene(Stage stage, InvoiceItem item) {
         return createEditOrAddScene(stage, "Edit Item", item, true,
                 updatedItem -> lm.editItem(item, updatedItem.key, updatedItem.articleNbr, updatedItem.price),
-                () -> stage.setScene(getInvoiceItemsScene(stage)));
+                () -> stage.setScene(getInvoiceItemsScene(stage)), true);
     }
 
     /**
@@ -379,7 +379,7 @@ public class App extends Application {
         return createEditOrAddScene(stage, "Edit Discount", discount, true,
                 updatedDiscount -> lm.editDiscount(discount, updatedDiscount.key, updatedDiscount.articleNbr,
                         updatedDiscount.price),
-                () -> stage.setScene(getDiscountScene(stage)));
+                () -> stage.setScene(getDiscountScene(stage)), false);
     }
 
     /**
@@ -395,7 +395,7 @@ public class App extends Application {
     private Scene getAddDiscountScene(Stage stage) {
         return createEditOrAddScene(stage, "Add New Discount", null, false,
                 newDiscount -> lm.addDiscount(newDiscount.key, newDiscount.articleNbr, newDiscount.price),
-                () -> stage.setScene(getDiscountScene(stage)));
+                () -> stage.setScene(getDiscountScene(stage)), false);
     }
 
     /**
@@ -535,7 +535,7 @@ public class App extends Application {
      * @return A Scene object configured for adding or editing an invoice item
      */
     private Scene createEditOrAddScene(Stage stage, String title, InvoiceItem item, boolean isEdit,
-            Consumer<InvoiceItem> saveCallback, Runnable backCallback) {
+            Consumer<InvoiceItem> saveCallback, Runnable backCallback, boolean editOrDiscount) {
         // Huvudlayout
         BorderPane window = new BorderPane();
 
@@ -548,7 +548,8 @@ public class App extends Application {
         HBox articleNumberRow = createInputRow("Article Number", isEdit ? item.articleNbr : "");
 
         // Knappar
-        Button backButton = createMenuButton("Back", stage, this::getDiscountScene);
+        Button backButton = createMenuButton("Back", stage,
+                editOrDiscount ? this::getInvoiceItemsScene : this::getDiscountScene);
 
         Button saveButton = createButton(isEdit ? "Save Changes" : "Add Item", "menu-button", e -> {
             try {
