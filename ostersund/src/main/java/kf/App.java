@@ -155,13 +155,14 @@ public class App extends Application {
                 createButton("Exit", "menu-button", e -> stage.close()));
         buttonMenu.setPadding(new Insets(30));
 
-        VBox instructions = createVBox(Pos.TOP_LEFT, 10,
+        VBox instructions = createVBox(Pos.CENTER_LEFT, 10,
                 createLabel("How to use:", "label"),
                 createText(
                         "Generate Invoices:\nGenerates invoices based on your provided CSV file\n" +
                                 "with the use of your active invoice items.\n\n" +
                                 "Invoice Items:\nAdd the items you wish to have active\n" +
-                                "for your invoice generation."),
+                                "for your invoice generation.\n\n" +
+                                "Discounts: \nThe discounts are articles set in fortnox "),
                 createButton("Change csv file", "menu-button", e -> stage.setScene(getSelectFileScene(stage))));
         instructions.setPadding(new Insets(30));
 
@@ -231,6 +232,7 @@ public class App extends Application {
     private Scene getInvoiceItemsScene(Stage stage) {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
+        itemList.setAlignment(Pos.BASELINE_LEFT);
 
         HBox headerRow = new HBox(10);
         headerRow.getChildren().addAll(
@@ -326,9 +328,10 @@ public class App extends Application {
     private Scene getDiscountScene(Stage stage) {
         VBox itemList = new VBox(10);
         itemList.setPadding(new Insets(20));
+        itemList.setAlignment(Pos.CENTER_LEFT);
 
         for (InvoiceItem discount : lm.getDiscounts()) {
-            HBox discountRow = createHBox(Pos.CENTER_LEFT, 10,
+            HBox discountRow = createHBox(Pos.TOP_LEFT, 10,
                     createLabel(discount.key, "instructions-text"),
                     createButton("Edit", "menu-button", e -> stage.setScene(getEditDiscountScene(stage, discount))),
                     createButton("Remove", "remove-button", e -> {
@@ -340,6 +343,8 @@ public class App extends Application {
 
         VBox tooltipBox = createTooltipBox("Tool tip",
                 "Manage discounts here.\nUse names consistent\nwith your CSV file.");
+        tooltipBox.setAlignment(Pos.TOP_LEFT);
+        ;
 
         HBox buttonLayout = createHBox(Pos.CENTER, 20,
                 createButton("Back", "menu-button", e -> {
